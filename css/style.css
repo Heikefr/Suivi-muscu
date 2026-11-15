@@ -223,7 +223,7 @@ button.case { background: var(--carte); border: 1px solid var(--bord); border-ra
 
 .toast {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 30;
+  top: calc(env(safe-area-inset-top) + 12px); z-index: 30;
   background: var(--texte); color: var(--fond);
   padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600;
   max-width: calc(100% - 40px); text-align: center;
@@ -236,3 +236,97 @@ button.case { background: var(--carte); border: 1px solid var(--bord); border-ra
 .case-a-cocher { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; }
 .case-a-cocher input { width: 22px; height: 22px; accent-color: var(--accent); }
 .cache { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+
+/* ---------- 0.2 ---------- */
+button.conseillee { width: 100%; font-family: inherit; }
+.titre-seance { font-family: var(--titre); font-size: 22px !important; font-weight: 700; }
+.pointille-accent { background: transparent; border: 1px dashed var(--accent); }
+.carre-plus {
+  width: 40px; height: 40px; flex: 0 0 40px !important; border-radius: 12px; background: var(--carte2);
+  display: flex !important; align-items: center; justify-content: center;
+}
+.mini-dessin {
+  width: 44px; height: 44px; flex: 0 0 44px !important; border-radius: 10px; background: var(--carte2);
+  display: flex !important; align-items: center; justify-content: center;
+}
+.choix > span.mini-dessin + span, .choix > span.carre-plus + span { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+
+.puces { display: flex; gap: 8px; flex-wrap: wrap; }
+.puces.defile { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
+.puces.defile::-webkit-scrollbar { display: none; }
+.puce {
+  height: 36px; padding: 0 14px; border-radius: 18px; flex-shrink: 0;
+  background: var(--carte); border: 1px solid var(--bord); font-size: 13px; font-weight: 600;
+}
+.puce.on { background: var(--accent); border-color: var(--accent); color: var(--fond); font-weight: 700; }
+.puce.h { color: #FF8A5B; border-color: #5A3524; background: #1E1612; }
+.puce.h.on { background: #FF8A5B; color: #120E0C; }
+
+.case-seance {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--carte); border: 1px solid var(--bord); border-radius: 14px; padding: 10px 8px 10px 14px;
+}
+.case-choix {
+  flex: 1; display: flex; flex-direction: column; gap: 3px; text-align: left;
+  background: transparent; border: none; padding: 0; min-height: 44px;
+}
+.nom-case { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; }
+.raison { font-size: 12px; color: var(--accent); line-height: 1.35; }
+.btn-retirer {
+  width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; border: none;
+  background: var(--carte2); color: var(--doux); display: flex; align-items: center; justify-content: center;
+}
+.btn-ajout {
+  height: 52px; border-radius: 14px; border: 1px dashed var(--gris); background: transparent;
+  font-size: 15px; font-weight: 600;
+}
+.barre-action {
+  position: sticky; bottom: 0; z-index: 4;
+  margin: 0 -20px -24px; padding: 12px 20px calc(env(safe-area-inset-bottom) + 16px);
+  background: linear-gradient(to bottom, rgba(14, 16, 19, 0), var(--fond) 22%);
+}
+
+.recherche {
+  display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px;
+  border-radius: 12px; background: var(--carte); border: 1px solid var(--bord);
+}
+.recherche input { flex: 1; background: transparent; border: none; outline: none; font-size: 16px; min-width: 0; }
+.champ {
+  height: 48px; border-radius: 12px; background: var(--carte2); border: 1px solid var(--bord);
+  padding: 0 14px; font-size: 16px; width: 100%;
+}
+
+.ligne-coche {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; text-align: left;
+  background: var(--carte); border: 1px solid var(--bord); border-radius: 14px; padding: 8px 14px;
+}
+.ligne-coche .coche {
+  width: 24px; height: 24px; flex-shrink: 0; border-radius: 7px; border: 2px solid var(--gris);
+  display: flex; align-items: center; justify-content: center; color: var(--fond);
+}
+.ligne-coche .txt { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.ligne-coche .nom { font-size: 15px; font-weight: 600; }
+.ligne-coche .ordre { font-size: 14px; font-weight: 700; color: var(--accent); min-width: 18px; text-align: right; }
+.ligne-coche.on { border: 2px solid var(--accent); }
+.ligne-coche.on .coche { background: var(--accent); border-color: var(--accent); }
+.ligne-coche.h { background: #1E1612; border-color: #3A2419; }
+.ligne-coche.h .petit { color: #C9B3A8; }
+.ligne-coche.h.on { border-color: #FF8A5B; }
+.ligne-coche.h.on .coche { background: #FF8A5B; border-color: #FF8A5B; }
+.ligne-coche.h .ordre { color: #FF8A5B; }
+.groupe-titre.h { color: #FF8A5B; }
+
+/* Haltérophilie : même structure, couleurs à part pour s'y retrouver */
+.theme-haltero {
+  --accent: #FF8A5B; --accent-doux: #FFB08F;
+  --fond: #120E0C; --carte: #1E1612; --carte2: #2A1C16; --bord: #3A2419;
+  --doux: #C9B3A8; --gris: #6A4A3C;
+  background: var(--fond);
+}
+.lien-chiffre { background: transparent; border: none; padding: 0; text-align: left; line-height: 1; }
+.choix-reps { display: grid; gap: 10px; }
+.choix-reps button {
+  height: 60px; border-radius: 16px; border: 1px solid var(--bord); background: var(--carte);
+  font-size: 18px; font-weight: 700;
+}
+.choix-reps button.on { background: var(--accent); border-color: var(--accent); color: var(--fond); }

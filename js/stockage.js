@@ -3,8 +3,13 @@
 const CLE = 'suivi-muscu';
 
 export function vide() {
-  return { version: 1, historique: [], exclus: [], remplacements: {}, enCours: null };
+  return {
+    version: 1, historique: [], exclus: [], remplacements: {}, enCours: null,
+    records: {}, haltero: {}, seancesPerso: [],
+  };
 }
+
+const objet = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 
 export function valider(d) {
   if (!d || typeof d !== 'object' || d.version !== 1 || !Array.isArray(d.historique)) return null;
@@ -12,7 +17,10 @@ export function valider(d) {
     ...vide(),
     ...d,
     exclus: Array.isArray(d.exclus) ? d.exclus : [],
-    remplacements: d.remplacements && typeof d.remplacements === 'object' ? d.remplacements : {},
+    remplacements: objet(d.remplacements),
+    records: objet(d.records),
+    haltero: objet(d.haltero),
+    seancesPerso: Array.isArray(d.seancesPerso) ? d.seancesPerso : [],
   };
 }
 
