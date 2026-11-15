@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { suggestion, tendance, historiqueExo } from '../js/progression.js';
-import { exo } from '../js/donnees.js';
+import { suggestion, tendance, historiqueExo } from '../js/metier/progression.js';
+import { exo } from '../js/metier/donnees.js';
 
 const cible = { series: 3, repsMin: 8, repsMax: 10, recup: 90 };
 const s = (date, exoId, reps, charge, ressenti = null) => ({

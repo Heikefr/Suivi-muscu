@@ -583,7 +583,7 @@ schema('mollets-debout', () => surMarche((P) => bati([24, 20], [24, SOL]) + bati
 schema('mollets-marche', () => surMarche(() => ''));
 schema('mollets', () => {
   const { P, svg } = assis({ sansDossier: true, bras: 60, avant: 10 }, ['mollets'], { pied: 50 });
-  return `<rect x="${n1(P.p[0] - 2)}" y="${n1(P.p[1] + 8)}" width="22" height="${n1(SOL - P.p[1] - 8)}" rx="2.5" fill="${G}"></rect>` + svg
+  return `<rect x="${n1(P.p[0] + 2)}" y="${SOL - 5}" width="18" height="5" rx="2" fill="${G}"></rect>` + svg
     + mobile([P.g[0] - 12, P.g[1] - 10], [P.g[0] + 8, P.g[1] - 10], 6) + bati([P.g[0] + 8, P.g[1] - 10], [136, 70]) + bati([136, 60], [136, SOL]) + fleche([P.g[0] + 22, 124], [P.g[0] + 22, 102], true);
 });
 schema('tibialis', () => {

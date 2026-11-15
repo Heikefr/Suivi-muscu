@@ -1,18 +1,31 @@
 // Fonctionnement hors ligne (salle sans réseau).
 // Changer VERSION à chaque mise en ligne pour que le téléphone récupère la nouvelle version.
-const VERSION = 'suivi-muscu-0.3.2';
+const VERSION = 'suivi-muscu-0.4.0';
 const FICHIERS = [
   './',
   'index.html',
   'manifest.webmanifest',
   'css/style.css',
   'js/app.js',
-  'js/donnees.js',
-  'js/progression.js',
-  'js/import.js',
-  'js/stockage.js',
+  'js/commun.js',
+  'js/composition.js',
+  'js/etat.js',
+  'js/fenetres.js',
   'js/illustrations.js',
-  'js/hyrox.js',
+  'js/outils.js',
+  'js/seance-muscu.js',
+  'js/ecrans/accueil.js',
+  'js/ecrans/composition.js',
+  'js/ecrans/hyrox-seance.js',
+  'js/ecrans/hyrox.js',
+  'js/ecrans/progression.js',
+  'js/ecrans/reglages.js',
+  'js/ecrans/seance.js',
+  'js/metier/donnees.js',
+  'js/metier/hyrox.js',
+  'js/metier/import.js',
+  'js/metier/progression.js',
+  'js/metier/stockage.js',
   'icons/icon-192.png',
   'icons/apple-touch-icon.png',
 ];

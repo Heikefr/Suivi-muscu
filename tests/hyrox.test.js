@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   SEANCES_HYROX, genererPlan, semainesRestantes, phaseSemaine, allureTexte, lireTemps, ecrireTemps,
   reperesDepuisTest, suggestionLibre, ajustement, repartitionConseillee, niveauCharges, noteCharge,
-} from '../js/hyrox.js';
+} from '../js/metier/hyrox.js';
 import { dessinExiste } from '../js/illustrations.js';
 
 test('toutes les étapes ont un schéma', () => {

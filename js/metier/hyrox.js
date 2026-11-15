@@ -2,6 +2,8 @@
 // Fonctions pures : testées par tests/hyrox.test.js.
 // Séances écrites pour l'appli (inspirées des principes classiques d'entraînement Hyrox).
 
+import { mmss } from '../outils.js';
+
 // ---------- Étapes ----------
 
 const dist = (m) => (m >= 1000 ? `${String(m / 1000).replace('.', ',')} km` : `${m} m`);
@@ -211,11 +213,6 @@ export function seanceHyrox(id) {
 }
 
 // ---------- Allures ----------
-
-export function mmss(s) {
-  const t = Math.max(0, Math.round(s));
-  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-}
 
 // "52:30" ou "1:02:30" → secondes ; texte vide ou illisible → null.
 export function lireTemps(texte) {

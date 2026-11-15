@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { importerCsv, lireCsv, fusionner } from '../js/import.js';
+import { importerCsv, lireCsv, fusionner } from '../js/metier/import.js';
 
 // Exemple inventé, au format de l'export CSV Google Sheets (virgules décimales entre guillemets).
 const CSV = `Date,Type Séance,Exercice,Séries,Reps / série,Charge (kg),Volume Total (kg),RPE,Notes

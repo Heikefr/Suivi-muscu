@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { EXERCICES, SEANCES, GROUPES, exo } from '../js/donnees.js';
+import { EXERCICES, SEANCES, GROUPES, exo } from '../js/metier/donnees.js';
 import { dessinExiste } from '../js/illustrations.js';
-import { choisirPourCase, planHaltero, bilanHaltero } from '../js/progression.js';
+import { choisirPourCase, planHaltero, bilanHaltero } from '../js/metier/progression.js';
 
 test('catalogue cohérent', () => {
   const ids = new Set();

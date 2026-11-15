@@ -1,0 +1,161 @@
+import { ICONES, estHaltero, infoExo, nomExo } from './commun.js';
+import { nomItem } from './ecrans/hyrox.js';
+import { resumeSeries } from './ecrans/seance.js';
+import { d, ui } from './etat.js';
+import { illustration } from './illustrations.js';
+import { EXERCICES, GROUPES, exo, seance } from './metier/donnees.js';
+import { genererPlan } from './metier/hyrox.js';
+import { aujourdhui, dateCourte, dateLongue, esc, mmss, nb } from './outils.js';
+import { chargeSerie, exoCourant } from './seance-muscu.js';
+
+export function ligneChoix(id, actuel, indexCase) {
+  const def = exo(id);
+  return `<button class="choix ${id === actuel ? 'selection' : ''}" data-action="choisir" data-id="${id}" data-i="${indexCase}" style="min-height:58px">
+    <span class="mini-dessin">${illustration(def.dessin, def.nom, 40)}</span>
+    <span><span class="nom" style="font-size:15px">${esc(def.nom)}</span><span class="petit">${esc(infoExo(id))}</span></span>
+    ${id === actuel ? ICONES.coche : ''}
+  </button>`;
+}
+
+export function modalHtml() {
+  const m = ui.modal;
+  if (!m) return '';
+  let contenu = '';
+  if (m.type === 'choix') {
+    const c = ui.compo;
+    const dejaLa = c.cases.map((k) => k.exo);
+    if (m.i >= 0) {
+      const cas = c.cases[m.i];
+      const def = exo(cas.exo);
+      const sug = cas.options.filter((o) => !d.exclus.includes(o) && (o === cas.exo || !dejaLa.includes(o)));
+      const autres = EXERCICES.filter((e) => e.groupe === def.groupe && !sug.includes(e.id) && !d.exclus.includes(e.id) && !dejaLa.includes(e.id));
+      contenu = `<div class="label petit">${esc(cas.role)}</div><h2>Choisis l'exercice</h2>
+        ${sug.length ? `<div class="sur-titre">Suggérés</div>${sug.map((id) => ligneChoix(id, cas.exo, m.i)).join('')}` : ''}
+        ${autres.length ? `<div class="sur-titre">Tous les exercices ${esc(def.groupe.toLowerCase())}</div>${autres.map((e) => ligneChoix(e.id, cas.exo, m.i)).join('')}` : ''}
+        <button class="btn-principal" data-action="fermer">Fermer</button>`;
+    } else {
+      const s = seance(c.seance);
+      const ordre = [...GROUPES].sort((a, b) => {
+        const fa = EXERCICES.some((e) => e.groupe === a && e.famille === s.id) ? 0 : 1;
+        const fb = EXERCICES.some((e) => e.groupe === b && e.famille === s.id) ? 0 : 1;
+        return fa - fb;
+      });
+      contenu = `<h2>Ajouter un exercice</h2>
+        ${ordre.map((g) => {
+    const items = EXERCICES.filter((e) => e.groupe === g && !d.exclus.includes(e.id) && !dejaLa.includes(e.id));
+    return items.length ? `<div class="groupe-titre ${g === 'Haltérophilie' ? 'h' : ''}">${esc(g)}</div>${items.map((e) => ligneChoix(e.id, null, -1)).join('')}` : '';
+  }).join('')}
+        <button class="btn-principal" data-action="fermer">Fermer</button>`;
+    }
+  } else if (m.type === 'options') {
+    const e = exoCourant();
+    const def = exo(e.exo);
+    const dansSeance = d.enCours.exercices.map((x) => x.exo);
+    const alts = EXERCICES.filter((x) => x.groupe === def.groupe && x.id !== def.id && !d.exclus.includes(x.id) && !dansSeance.includes(x.id));
+    const fait = e.series.length;
+    const charge = chargeSerie(e, fait);
+    if (estHaltero(def)) {
+      const record = d.records[def.id];
+      contenu = `<h2>${esc(def.nom)}</h2>
+        <div class="carte pile">
+          <div class="ligne"><div style="flex:1;font-weight:600">Poids de cette série</div>
+            <div class="stepper"><button data-action="charge" data-d="-1" aria-label="Moins lourd">−</button><div class="val">${charge == null ? '—' : nb(charge) + ' kg'}</div><button data-action="charge" data-d="1" aria-label="Plus lourd">+</button></div>
+          </div>
+          <div class="petit">Par pas de 1 kg. Ne change que la série en cours.</div>
+        </div>
+        <div class="carte pile">
+          <div class="ligne"><div style="flex:1;font-weight:600">Record (1 rep)</div>
+            <div class="stepper"><button data-action="record-pas" data-id="${def.id}" data-d="-1" aria-label="Record moins">−</button><div class="val">${record ? nb(record) + ' kg' : '—'}</div><button data-action="record-pas" data-id="${def.id}" data-d="1" aria-label="Record plus">+</button></div>
+          </div>
+          <div class="petit">Recalcule les séries restantes en % du record.</div>
+          ${record ? `<button class="btn-lien" data-action="record-inconnu" data-id="${def.id}">Je ne connais pas mon record</button>` : ''}
+        </div>
+        ${fait === 0 && alts.length ? `<div class="sur-titre">Remplacer par</div>${alts.map((a) => `<button class="choix" data-action="remplacer" data-id="${a.id}" style="min-height:52px"><span><span class="nom" style="font-size:15px">${esc(a.nom)}</span><span class="petit">${esc(infoExo(a.id))}</span></span></button>`).join('')}` : ''}
+        <button class="btn-secondaire" data-action="passer-exo">Passer cet exercice</button>
+        <button class="btn-principal" data-action="fermer">OK</button>`;
+    } else {
+      contenu = `<h2>${esc(def.nom)}</h2>
+        ${def.poidsDuCorps ? '' : `<div class="carte pile">
+          <div class="ligne"><div style="flex:1;font-weight:600">Poids${def.materiel === 'halteres' ? ' par haltère' : ''}</div>
+            <div class="stepper"><button data-action="charge" data-d="-1" aria-label="Moins lourd">−</button><div class="val">${e.charge == null ? '—' : nb(e.charge) + ' kg'}</div><button data-action="charge" data-d="1" aria-label="Plus lourd">+</button></div>
+          </div>
+          <div class="petit">Par pas de ${nb(def.increment)} kg${e.conseillee != null ? ` · conseillé ${nb(e.conseillee)} kg` : ''}. Vaut pour la suite de cet exercice.</div>
+        </div>`}
+        ${fait === 0 && alts.length ? `<div class="sur-titre">Remplacer par</div>${alts.map((a) => `<button class="choix" data-action="remplacer" data-id="${a.id}" style="min-height:52px"><span class="mini-dessin">${illustration(a.dessin, a.nom, 40)}</span><span><span class="nom" style="font-size:15px">${esc(a.nom)}</span><span class="petit">${esc(infoExo(a.id))}</span></span></button>`).join('')}` : ''}
+        <button class="btn-secondaire" data-action="passer-exo">Passer cet exercice</button>
+        <button class="btn-principal" data-action="fermer">OK</button>`;
+    }
+  } else if (m.type === 'record') {
+    const def = exo(m.id);
+    const r = d.records[def.id];
+    contenu = `<h2>Record · ${esc(def.nom)}</h2>
+      <div class="carte ligne"><div style="flex:1;font-weight:600">1 rep max</div>
+        <div class="stepper"><button data-action="record-pas" data-id="${def.id}" data-d="-1" aria-label="Moins">−</button><div class="val">${r ? nb(r) + ' kg' : '—'}</div><button data-action="record-pas" data-id="${def.id}" data-d="1" aria-label="Plus">+</button></div>
+      </div>
+      <div class="ligne" style="gap:8px">${[-10, -5, 5, 10].map((x) => `<button class="btn-secondaire" data-action="record-pas" data-id="${def.id}" data-d="${x}">${x > 0 ? '+' : '−'}${Math.abs(x)}</button>`).join('')}</div>
+      ${r ? `<button class="btn-lien" data-action="record-inconnu" data-id="${def.id}">Je ne connais pas mon record</button>` : ''}
+      <button class="btn-principal" data-action="fermer">OK</button>`;
+  } else if (m.type === 'enregistrer') {
+    contenu = `<h2>Enregistrer la séance</h2>
+      <label class="pile" style="gap:6px"><span class="petit">Nom de la séance</span>
+        <input id="nom-seance" class="champ" maxlength="40" value="${esc(ui.perso.nom || '')}" placeholder="Ex. Haltéro arraché">
+      </label>
+      <div class="petit">Elle apparaîtra sur l'accueil, sous « Séance personnalisée ».</div>
+      <button class="btn-principal" data-action="enregistrer-ok">Enregistrer</button>
+      <button class="btn-secondaire" data-action="fermer">Annuler</button>`;
+  } else if (m.type === 'suppr-perso') {
+    contenu = `<h2>Supprimer « ${esc(ui.perso.nom)} » ?</h2>
+      <div class="petit">Seule la séance enregistrée est supprimée, pas ton historique.</div>
+      <button class="btn-secondaire btn-danger" data-action="suppr-perso-ok">Oui, supprimer</button>
+      <button class="btn-principal" data-action="fermer">Annuler</button>`;
+  } else if (m.type === 'quitter-h') {
+    contenu = `
+      <h2>Quitter la séance&nbsp;?</h2>
+      <button class="btn-secondaire" data-action="pause-h">Revenir plus tard (garder en cours)</button>
+      ${d.enCoursHyrox.splits.length ? '<button class="btn-secondaire" data-action="terminer-h">Terminer et enregistrer</button>' : ''}
+      <button class="btn-secondaire btn-danger" data-action="abandonner-h">Abandonner sans enregistrer</button>
+      <button class="btn-principal" data-action="fermer">Continuer la séance</button>`;
+  } else if (m.type === 'plan') {
+    const plan = genererPlan(d.hyroxProfil, aujourdhui());
+    contenu = `<h2>Tout le plan</h2>
+      ${plan.map((w) => `<div class="carte pile" style="gap:6px">
+        <div class="ligne"><div style="flex:1;font-weight:600">Semaine ${w.index + 1} · du ${dateCourte(w.debut)} au ${dateCourte(w.fin)}</div><div class="label" style="color:var(--accent);font-size:11px">${w.phase}</div></div>
+        <div class="petit">${w.items.map(nomItem).join(' · ')}</div>
+      </div>`).join('')}
+      <button class="btn-principal" data-action="fermer">Fermer</button>`;
+  } else if (m.type === 'quitter') {
+    const faites = d.enCours.exercices.reduce((t, e) => t + e.series.length, 0);
+    contenu = `
+      <h2>Quitter la séance&nbsp;?</h2>
+      <button class="btn-secondaire" data-action="pause">Revenir plus tard (garder en cours)</button>
+      ${faites ? '<button class="btn-secondaire" data-action="terminer">Terminer et enregistrer</button>' : ''}
+      <button class="btn-secondaire btn-danger" data-action="abandonner">Abandonner sans enregistrer</button>
+      <button class="btn-principal" data-action="fermer">Continuer la séance</button>`;
+  } else if (m.type === 'seance') {
+    const s = d.historique.find((h) => h.id === m.id);
+    contenu = `
+      <h2>${esc(s.nom || s.seance)}</h2>
+      <div class="petit">${dateLongue(s.date)}${s.importee ? ' · importée' : ''}${s.hyrox ? ` · ${mmss(s.hyrox.total)}${s.hyrox.ressenti ? ` · ${s.hyrox.ressenti}` : ''}` : ''}</div>
+      ${s.hyrox ? `<div class="carte liste-perf">${s.hyrox.splits.filter((x) => !x.repos).map((x) => `<div><span>${esc(x.texte)}</span><span class="petit" style="font-size:14px">${x.passe ? 'passé' : mmss(x.duree)}</span></div>`).join('')}</div>` : ''}
+      ${s.exercices.map((e) => `<div class="carte"><div style="font-weight:600">${esc(nomExo(e.exo, e.nom))}</div><div class="petit">${resumeSeries(e.series, exo(e.exo))}</div></div>`).join('')}
+      ${m.confirmer ? `<div class="petit">Supprimer définitivement cette séance&nbsp;?</div>
+        <button class="btn-secondaire btn-danger" data-action="supprimer-seance" data-id="${esc(s.id)}">Oui, supprimer</button>`
+    : '<button class="btn-secondaire btn-danger" data-action="confirmer-suppr">Supprimer cette séance</button>'}
+      <button class="btn-principal" data-action="fermer">Fermer</button>`;
+  } else if (m.type === 'effacer') {
+    contenu = `
+      <h2>Tout effacer&nbsp;?</h2>
+      <div class="petit">L'historique, les records et les séances enregistrées seront supprimés de ce téléphone. Pense à exporter une sauvegarde avant.</div>
+      <button class="btn-secondaire btn-danger" data-action="effacer-ok">Oui, tout effacer</button>
+      <button class="btn-principal" data-action="fermer">Annuler</button>`;
+  } else if (m.type === 'import') {
+    contenu = `
+      <h2>Import terminé</h2>
+      <div style="font-size:15px">${m.ajoutees} séance${m.ajoutees > 1 ? 's' : ''} ajoutée${m.ajoutees > 1 ? 's' : ''}${m.maj ? `, ${m.maj} mise${m.maj > 1 ? 's' : ''} à jour` : ''}.</div>
+      ${m.inconnus?.length ? `<div class="petit">Gardés dans l'historique mais absents du catalogue : ${m.inconnus.map(esc).join(', ')}.</div>` : ''}
+      <button class="btn-principal" data-action="fermer">OK</button>`;
+  }
+  const theme = m.type === 'options' && d.enCours && estHaltero(exo(exoCourant().exo)) ? 'theme-haltero'
+    : ['quitter-h', 'plan'].includes(m.type) ? 'theme-hyrox' : '';
+  return `<div class="voile" data-action="voile"><div class="feuille ${theme}" role="dialog" aria-modal="true">${contenu}</div></div>`;
+}
