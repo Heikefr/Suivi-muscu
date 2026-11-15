@@ -14,7 +14,7 @@ import {
   CHARGES, niveauCharges, noteCharge,
 } from './hyrox.js';
 
-export const VERSION = '0.3.1';
+export const VERSION = '0.3.2';
 
 let d = charger();
 const ui = {
@@ -1894,10 +1894,21 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
       b.onclick = () => w.postMessage('activer');
       document.body.appendChild(b);
     };
-    if (reg.waiting) proposer(reg.waiting);
+    // Hors séance, la nouvelle version s'installe toute seule ; pendant une séance, on propose.
+    const appliquer = (w) => {
+      if (!w || !navigator.serviceWorker.controller) return;
+      if (!d.enCours && !d.enCoursHyrox) w.postMessage('activer');
+      else proposer(w);
+    };
+    if (reg.waiting) appliquer(reg.waiting);
     reg.addEventListener('updatefound', () => {
       const w = reg.installing;
-      w?.addEventListener('statechange', () => { if (w.state === 'installed') proposer(w); });
+      w?.addEventListener('statechange', () => { if (w.state === 'installed') appliquer(w); });
+    });
+    // Vérifie s'il y a une mise à jour à chaque retour dans l'appli.
+    reg.update().catch(() => {});
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
     });
   }).catch(() => {});
   let recharge = false;
