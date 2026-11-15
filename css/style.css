@@ -127,7 +127,7 @@ h2 { margin: 0; font-family: var(--titre); font-size: 22px; font-weight: 700; li
   padding: 8px 12px calc(env(safe-area-inset-bottom) + 8px);
   z-index: 5;
 }
-.nav > div { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.nav > div { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .nav button {
   height: 56px; background: transparent; border: none; color: var(--doux);
   font-size: 12px; font-weight: 600;
@@ -334,3 +334,48 @@ button.conseillee { width: 100%; font-family: inherit; }
 .ligne-coche .mini-dessin, .case-seance .mini-dessin { display: flex; }
 .case-seance { padding-left: 10px; }
 .ligne-coche { padding-left: 10px; }
+
+/* ---------- Hyrox (0.3) ---------- */
+.theme-hyrox {
+  --accent: #5AC8FA; --accent-doux: #9ADCFB;
+  --fond: #0B1218; --carte: #13202B; --carte2: #1C2E3C; --bord: #22394A;
+  --doux: #9FB3C2; --gris: #3A5568;
+  background: var(--fond);
+}
+.theme-hyrox .barre-action { background: linear-gradient(to bottom, rgba(11, 18, 24, 0), var(--fond) 22%); }
+.segments { display: grid; gap: 4px; }
+.segments div { height: 6px; border-radius: 3px; background: var(--bord); }
+.segments div.on { background: var(--accent); }
+.barres-h { display: flex; gap: 4px; }
+.barres-h div { height: 4px; border-radius: 2px; background: var(--bord); }
+.barres-h div.fait { background: var(--accent); }
+.barres-h div.encours { background: #2B5A73; }
+.rond-h {
+  width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--gris);
+  display: flex; align-items: center; justify-content: center;
+}
+.rond-h.fait { background: var(--accent); border-color: var(--accent); }
+.rond-h.fait svg { width: 16px; height: 16px; }
+.etape {
+  display: flex; align-items: center; gap: 12px; min-height: 56px;
+  padding: 8px 12px; border-radius: 12px; background: var(--carte); border: 1px solid var(--bord);
+}
+.etape .txt { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.etape .nom { font-size: 15px; font-weight: 600; }
+.etape.faite { opacity: .7; }
+.etape.avenir { background: transparent; }
+.etape.active { border: 2px solid var(--accent); padding: 12px; }
+.etape .mini-dessin { display: flex; }
+.temps-h { font-family: var(--titre); font-size: 64px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.segment { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; background: var(--carte); border-radius: 14px; padding: 4px; }
+.segment button { height: 44px; border-radius: 11px; border: none; background: transparent; color: var(--doux); font-size: 14px; font-weight: 600; }
+.segment button.on { background: var(--accent); color: var(--fond); font-weight: 700; }
+.repere { display: flex; align-items: center; gap: 10px; min-height: 52px; border-bottom: 1px solid var(--bord); }
+.repere:last-child { border-bottom: none; }
+.repere .lib { flex: 1; font-size: 15px; }
+.repere input {
+  width: 84px; height: 40px; border-radius: 10px; border: 1px solid var(--bord); background: var(--carte2);
+  text-align: center; font-size: 16px; font-weight: 700;
+}
+.repere .al { width: 92px; text-align: right; font-size: 12px; }
+.champ-date { background: transparent; border: none; font-size: 17px; font-weight: 600; padding: 0; color: var(--texte); color-scheme: dark; }

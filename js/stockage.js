@@ -6,6 +6,7 @@ export function vide() {
   return {
     version: 1, historique: [], exclus: [], remplacements: {}, enCours: null,
     records: {}, haltero: {}, seancesPerso: [],
+    hyroxProfil: null, hyroxAjust: {}, enCoursHyrox: null,
   };
 }
 
@@ -21,6 +22,8 @@ export function valider(d) {
     records: objet(d.records),
     haltero: objet(d.haltero),
     seancesPerso: Array.isArray(d.seancesPerso) ? d.seancesPerso : [],
+    hyroxProfil: d.hyroxProfil && typeof d.hyroxProfil === 'object' ? d.hyroxProfil : null,
+    hyroxAjust: objet(d.hyroxAjust),
   };
 }
 

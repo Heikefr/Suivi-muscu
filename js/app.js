@@ -8,8 +8,12 @@ import {
 import { importerCsv, fusionner } from './import.js';
 import { charger, sauver, valider, vide, demanderPersistance } from './stockage.js';
 import { illustration } from './illustrations.js';
+import {
+  SEANCES_HYROX, LIBRES, seanceHyrox, allureTexte, lireTemps, ecrireTemps, reperesDepuisTest,
+  genererPlan, semainesRestantes, joursRestants, repartitionConseillee, suggestionLibre, ajustement,
+} from './hyrox.js';
 
-export const VERSION = '0.2';
+export const VERSION = '0.3';
 
 let d = charger();
 const ui = {
@@ -127,6 +131,7 @@ const ICONES = {
   seances: '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11h16M5 7v8M17 7v8M2 9v4M20 9v4"></path></svg>',
   progression: '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 7-9"></path></svg>',
   exercices: '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h14M4 11h14M4 16h14"></path></svg>',
+  hyrox: '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="12" r="7"></circle><path d="M11 12V8.5M9 2.5h4M16.5 5.5l1.5-1.5"></path></svg>',
   loupe: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--doux)" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="5"></circle><path d="M12 12l4 4"></path></svg>',
 };
 
@@ -173,7 +178,7 @@ let verrouEcran = null;
 
 async function garderEcranAllume() {
   try {
-    if ('wakeLock' in navigator && d.enCours && !verrouEcran) {
+    if ('wakeLock' in navigator && (d.enCours || d.enCoursHyrox) && !verrouEcran) {
       verrouEcran = await navigator.wakeLock.request('screen');
       verrouEcran.addEventListener('release', () => { verrouEcran = null; });
     }
@@ -308,7 +313,7 @@ function terminer() {
 
 function nav(actif) {
   const b = (id, nom) => `<button data-action="onglet" data-id="${id}" class="${actif === id ? 'actif' : ''}" ${actif === id ? 'aria-current="page"' : ''}>${ICONES[id]}${nom}</button>`;
-  return `<nav class="nav"><div>${b('seances', 'Séances')}${b('progression', 'Progression')}${b('exercices', 'Exercices')}</div></nav>`;
+  return `<nav class="nav ${actif === 'hyrox' ? 'theme-hyrox' : ''}"><div>${b('seances', 'Muscu')}${b('hyrox', 'Hyrox')}${b('progression', 'Progression')}${b('exercices', 'Exercices')}</div></nav>`;
 }
 
 function ecranAccueil() {
@@ -724,7 +729,7 @@ function ecranProgression() {
 
   const seancesRecentes = [...d.historique].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12).map((s) => `
     <button class="choix" data-action="voir-seance" data-id="${esc(s.id)}" style="min-height:56px">
-      <span><span class="nom" style="font-size:15px">${esc(s.nom || s.seance)}</span><span class="petit">${dateLongue(s.date)} · ${s.exercices.length} exercices</span></span>
+      <span><span class="nom" style="font-size:15px">${esc(s.nom || s.seance)}</span><span class="petit">${dateLongue(s.date)} · ${s.hyrox ? `Hyrox · ${mmss(s.hyrox.total)}` : `${s.exercices.length} exercices`}</span></span>
       ${ICONES.suite}
     </button>`).join('');
 
@@ -821,6 +826,435 @@ function ecranReglages() {
       <button class="btn-secondaire btn-danger" data-action="effacer">Effacer toutes les données</button>
     </div>
     <div class="petit" style="text-align:center">Suivi muscu · version ${VERSION}</div>
+  </main>`;
+}
+
+// ---------- Hyrox ----------
+
+const NOMS_PHASE = { Base: 'Base', Construction: 'Construction', Pic: 'Pic', 'Compétition': 'Compétition' };
+
+function nomItem(it) {
+  if (it.type === 'hyrox') return seanceHyrox(it.id).nom;
+  if (it.type === 'muscu') return 'Muscu';
+  return 'Jour J';
+}
+
+function dureeSeanceHyrox(s) {
+  return `${s.duree} min`;
+}
+
+function resumeEtapes(s) {
+  const p = s.blocs(d.hyroxAjust[s.id] || 0).find((b) => b.nom !== 'Échauffement' && b.nom !== 'Retour au calme') || s.blocs(0)[0];
+  const etapes = p.etapes.filter((e) => !e.repos).map((e) => e.texte);
+  const liste = etapes.length > 4 ? `${etapes.slice(0, 4).join(', ')}…` : etapes.join(', ');
+  return p.tours > 1 ? `${p.tours} tours : ${liste}` : liste;
+}
+
+function ecranHyroxIntro() {
+  return `<main class="ecran avec-nav theme-hyrox">
+    <div class="pile" style="gap:6px"><div class="sur-titre">Hyrox</div><h1>Prépare ton Hyrox</h1></div>
+    <div class="carte pile" style="gap:8px;font-size:15px;line-height:1.45">
+      <div>Indique une date de compétition et l'appli construit ton plan semaine par semaine. Ou entraîne-toi librement, sans date.</div>
+      <div class="petit">Tes repères (10 km, rameur, SkiErg) servent à calculer tes allures. Si tu ne les connais pas, la séance test les mesure.</div>
+    </div>
+    <button class="btn-principal" data-action="hyrox-profil">Créer mon profil Hyrox</button>
+    <button class="btn-secondaire" data-action="hyrox-libre">Voir les séances Hyrox</button>
+  </main>${nav('hyrox')}`;
+}
+
+function carteReprise() {
+  if (!d.enCoursHyrox) return '';
+  return `<div class="conseillee">
+    <div class="label">Séance en cours</div>
+    <div class="titre">${esc(d.enCoursHyrox.nom)}</div>
+    <button class="btn-sombre" data-action="reprendre-h">Reprendre la séance</button>
+  </div>`;
+}
+
+function faitesSemaine(w) {
+  const dans = d.historique.filter((s) => s.date >= w.debut && s.date <= w.fin && !s.importee);
+  const hy = {};
+  let mu = 0;
+  for (const s of dans) {
+    if (s.seance?.startsWith('hyrox:')) {
+      const id = s.seance.slice(6);
+      (hy[id] = hy[id] || []).push(s);
+    } else mu++;
+  }
+  return { hy, mu };
+}
+
+function ecranHyrox() {
+  const p = d.hyroxProfil;
+  if (!p) return ecranHyroxIntro();
+  const auj = aujourdhui();
+  if (p.mode !== 'competition' || semainesRestantes(p.date, auj) === 0) return ecranHyroxLibre(false);
+
+  const plan = genererPlan(p, auj);
+  const w = plan[0];
+  const j = joursRestants(p.date, auj);
+  const { hy, mu } = faitesSemaine(w);
+  let muRestant = mu;
+  let prochaineMarquee = false;
+  const lignes = w.items.map((it) => {
+    if (it.type === 'competition') {
+      return `<div class="carte ligne" style="min-height:64px"><span class="rond-h"></span><span class="pile" style="gap:3px;flex:1"><span style="font-weight:700;font-size:16px">Jour J</span><span class="petit">${dateLongue(p.date)} · bonne compétition&nbsp;!</span></span></div>`;
+    }
+    let faite = null;
+    if (it.type === 'hyrox' && hy[it.id]?.length) faite = hy[it.id].shift();
+    if (it.type === 'muscu' && muRestant > 0) { muRestant--; faite = true; }
+    const titre = it.type === 'hyrox' ? seanceHyrox(it.id).nom : `Muscu · ${seance(prochaineSeance()).nom}`;
+    if (faite) {
+      const info = faite === true ? 'Faite cette semaine' : `Faite ${ilYa(faite.date)}${faite.hyrox?.ressenti ? ` · ${faite.hyrox.ressenti}` : ''}`;
+      return `<div class="carte ligne" style="min-height:64px"><span class="rond-h fait">${ICONES.coche.replace('var(--accent)', 'var(--fond)')}</span><span class="pile" style="gap:3px;flex:1"><span style="font-weight:600;font-size:16px">${esc(titre)}</span><span class="petit">${info}</span></span></div>`;
+    }
+    const action = it.type === 'hyrox' ? `data-action="hyrox-apercu" data-id="${it.id}"` : `data-action="composer" data-id="${prochaineSeance()}"`;
+    const sous = it.type === 'hyrox' ? `${esc(resumeEtapes(seanceHyrox(it.id)))} · ${dureeSeanceHyrox(seanceHyrox(it.id))}` : 'Ouvre ta séance de muscu habituelle';
+    if (!prochaineMarquee) {
+      prochaineMarquee = true;
+      return `<button class="conseillee" ${action} style="border:none;text-align:left">
+        <span class="label">Prochaine</span><span class="titre" style="font-size:22px">${esc(titre)}</span><span style="font-size:13px;font-weight:500">${sous}</span></button>`;
+    }
+    return `<button class="choix" ${action} style="min-height:72px"><span><span class="nom">${esc(titre)}</span><span class="petit">${sous}</span></span>${ICONES.suite}</button>`;
+  }).join('');
+  const nbHy = w.items.filter((x) => x.type === 'hyrox').length;
+  const nbMu = w.items.filter((x) => x.type === 'muscu').length;
+  const segments = plan.map((x, i) => `<div class="${i === 0 ? 'on' : ''}" title="${x.phase}"></div>`).join('');
+  const suite = plan.slice(1).map((x) => x.phase).filter((x, i, a) => a.indexOf(x) === i && x !== w.phase);
+  return `<main class="ecran avec-nav theme-hyrox">
+    <div class="entete">
+      <div><div class="sur-titre">Hyrox · compétition du ${dateLongue(p.date).replace(/^\S+ /, '')}</div><h1>${j <= 0 ? "C'est aujourd'hui" : `J-${j}`}</h1></div>
+      <button class="btn-icone" data-action="hyrox-profil" aria-label="Profil Hyrox">${ICONES.reglages}</button>
+    </div>
+    ${carteReprise()}
+    <div class="carte pile" style="gap:10px">
+      <div class="ligne"><div style="flex:1;font-weight:600">Semaine 1 sur ${plan.length}</div><div class="label" style="color:var(--accent);font-size:12px">${NOMS_PHASE[w.phase]}</div></div>
+      <div class="segments" style="grid-template-columns:repeat(${plan.length},minmax(0,1fr))">${segments}</div>
+      <div class="petit">${suite.length ? `Ensuite : ${suite.join(', puis ')}` : 'Dernière ligne droite'} · <button class="btn-lien" style="min-height:0;padding:0;font-size:13px;color:var(--accent)" data-action="voir-plan">Voir tout le plan</button></div>
+    </div>
+    <div class="sur-titre">Cette semaine · ${nbHy} Hyrox${nbMu ? ` + ${nbMu} muscu` : ''}</div>
+    <div class="pile" style="gap:8px">${lignes}</div>
+    <button class="btn-ajout" style="border-color:var(--accent)" data-action="hyrox-libre">Faire une autre séance Hyrox (libre)</button>
+  </main>${nav('hyrox')}`;
+}
+
+function ecranHyroxLibre(avecRetour) {
+  const p = d.hyroxProfil;
+  const sug = suggestionLibre(d.historique);
+  const derniere = (id) => d.historique.filter((s) => s.seance === `hyrox:${id}`).reduce((m, s) => (s.date > m ? s.date : m), '');
+  const carte = (id) => {
+    const s = seanceHyrox(id);
+    const der = derniere(id);
+    return `<button class="choix" data-action="hyrox-apercu" data-id="${id}" style="min-height:72px">
+      <span><span class="nom">${esc(s.nom)}</span><span class="petit">${esc(resumeEtapes(s))} · ${dureeSeanceHyrox(s)}${der ? ` · ${ilYa(der)}` : ''}</span></span>${ICONES.suite}</button>`;
+  };
+  const passee = p?.mode === 'competition' && semainesRestantes(p.date, aujourdhui()) === 0;
+  const s = seanceHyrox(sug);
+  const der = derniere(sug);
+  return `<main class="ecran ${avecRetour ? '' : 'avec-nav'} theme-hyrox">
+    <div class="entete">
+      ${avecRetour ? `<button class="btn-icone" data-action="onglet" data-id="hyrox" aria-label="Retour">${ICONES.retour}</button>` : ''}
+      <div><div class="sur-titre">Hyrox libre</div><h1>Choisis ta séance</h1></div>
+      ${avecRetour ? '' : `<button class="btn-icone" data-action="hyrox-profil" aria-label="Profil Hyrox">${ICONES.reglages}</button>`}
+    </div>
+    ${avecRetour ? '' : carteReprise()}
+    ${passee ? `<div class="bandeau">Ta compétition du ${dateCourte(p.date)} est passée. Entre une nouvelle date dans ton profil pour un nouveau plan.</div>` : ''}
+    <button class="conseillee" data-action="hyrox-apercu" data-id="${sug}" style="border:none;text-align:left">
+      <span class="label">Suggérée${der ? ` · faite ${ilYa(der)}` : ' · jamais faite'}</span>
+      <span class="titre" style="font-size:22px">${esc(s.nom)}</span>
+      <span style="font-size:13px;font-weight:500">${esc(resumeEtapes(s))} · ${dureeSeanceHyrox(s)}</span>
+    </button>
+    <div class="pile" style="gap:8px">${LIBRES.filter((x) => x !== sug).map(carte).join('')}
+      <button class="choix pointille" data-action="hyrox-apercu" data-id="test" style="min-height:64px">
+        <span><span class="nom" style="font-size:15px">Séance test</span><span class="petit">Mesure tes repères : 1 km course, SkiErg et rameur</span></span>${ICONES.suite}</button>
+    </div>
+  </main>${avecRetour ? '' : nav('hyrox')}`;
+}
+
+function ligneEtape(e, reperes, etat = '', duree = null) {
+  const al = allureTexte(e, reperes);
+  const allure = al && /\d/.test(al) ? `à ${al}` : al;
+  const info = e.repos ? '' : [allure, e.note, e.detail].filter(Boolean).join(' · ');
+  return `<div class="etape ${etat}">
+    <span class="mini-dessin">${illustration(e.dessin, e.texte, 40)}</span>
+    <span class="txt"><span class="nom">${esc(e.texte)}</span>${info ? `<span class="petit">${esc(info)}</span>` : ''}</span>
+    ${duree != null ? `<span class="petit" style="font-size:14px">${duree}</span>` : ''}
+  </div>`;
+}
+
+function ecranHyroxApercu() {
+  const s = seanceHyrox(ui.hyroxApercu);
+  const blocs = s.blocs(d.hyroxAjust[s.id] || 0);
+  const reperes = d.hyroxProfil?.reperes || {};
+  const ajust = d.hyroxAjust[s.id] || 0;
+  return `<main class="ecran theme-hyrox">
+    <div class="ligne">
+      <button class="btn-icone" data-action="onglet" data-id="hyrox" aria-label="Retour">${ICONES.retour}</button>
+      <div class="sur-titre" style="flex:1">${dureeSeanceHyrox(s)}${ajust ? ` · adaptée à ton ressenti (${ajust > 0 ? '+' : ''}${ajust} tour${Math.abs(ajust) > 1 ? 's' : ''})` : ''}</div>
+    </div>
+    <h1 style="font-size:28px">${esc(s.nom)}</h1>
+    <div class="petit" style="font-size:15px">${esc(s.description)}</div>
+    ${blocs.map((b) => `<div class="pile" style="gap:8px">
+      <div class="ligne"><div class="sur-titre" style="flex:1;font-weight:700;color:var(--texte)">${esc(b.nom)}</div>${b.tours > 1 ? `<div class="label" style="color:var(--accent);font-size:12px">${b.tours} tours</div>` : ''}</div>
+      ${b.etapes.map((e) => ligneEtape(e, reperes)).join('')}
+    </div>`).join('')}
+    ${!d.hyroxProfil?.reperes || !Object.keys(d.hyroxProfil.reperes).length ? '<div class="petit">Sans repères, les allures sont données en sensations. Renseigne-les dans ton profil ou fais la séance test.</div>' : ''}
+    <div class="barre-action theme-hyrox-fond"><button class="btn-principal" data-action="go-hyrox" data-id="${s.id}">Démarrer</button></div>
+  </main>`;
+}
+
+function etapeCourante() {
+  const h = d.enCoursHyrox;
+  return h.blocs[h.b].etapes[h.e];
+}
+
+function ecranHyroxSeance() {
+  const h = d.enCoursHyrox;
+  const bloc = h.blocs[h.b];
+  const reperes = d.hyroxProfil?.reperes || {};
+  const barres = h.blocs.map((b, i) => `<div class="${i < h.b ? 'fait' : i === h.b ? 'encours' : ''}" style="flex:${b.nom === 'Échauffement' || b.nom === 'Retour au calme' ? 1 : 3}"></div>`).join('');
+  const et = etapeCourante();
+  const lignes = bloc.etapes.map((e, i) => {
+    if (i < h.e) {
+      const sp = h.splits.find((x) => x.b === h.b && x.t === h.t && x.e === i);
+      return ligneEtape(e, reperes, 'faite', sp ? (sp.passe ? 'passé' : mmss(sp.duree)) : '');
+    }
+    if (i === h.e) {
+      return `<div class="etape active">
+        <span class="mini-dessin">${illustration(e.dessin, e.texte, 40)}</span>
+        <span class="txt"><span class="nom" style="font-size:17px">${esc(e.texte)}</span>
+        ${[allureTexte(e, reperes), e.note, e.detail].filter(Boolean).map((x) => `<span class="petit">${esc(x)}</span>`).join('')}
+        ${e.conseil ? `<span class="petit" style="color:var(--texte);opacity:.85">${esc(e.conseil)}</span>` : ''}</span>
+      </div>`;
+    }
+    return ligneEtape(e, reperes, 'avenir');
+  }).join('');
+  const toursFaits = [];
+  for (let t = 0; t < h.t; t++) {
+    const tot = h.splits.filter((x) => x.b === h.b && x.t === t).reduce((s, x) => s + x.duree, 0);
+    toursFaits.push(`tour ${t + 1} en ${mmss(tot)}`);
+  }
+  const libelle = et.repos ? (h.pause ? 'Reprendre' : 'Repos terminé') : 'Étape terminée';
+  return `<main class="ecran theme-hyrox">
+    <div class="ligne">
+      <button class="btn-icone" data-action="quitter-h" aria-label="Quitter la séance">${ICONES.retour}</button>
+      <div style="flex:1" class="pile">
+        <div class="sur-titre">${esc(h.nom)} · bloc ${h.b + 1} sur ${h.blocs.length}</div>
+        <div class="barres-h">${barres}</div>
+      </div>
+    </div>
+    <div class="ligne" style="align-items:baseline">
+      <h1 style="flex:1;font-size:26px">${esc(bloc.nom)}</h1>
+      ${bloc.tours > 1 ? `<span style="font-size:15px;font-weight:700;color:var(--accent)">Tour ${h.t + 1} sur ${bloc.tours}</span>` : ''}
+    </div>
+    <div class="pile" style="align-items:center;gap:2px;padding:4px 0">
+      <div class="temps-h" id="h-temps" role="timer">0:00</div>
+      <div class="petit" id="h-sous">&nbsp;</div>
+      ${toursFaits.length ? `<div class="petit">${toursFaits.join(' · ')}</div>` : ''}
+    </div>
+    <div class="pile" style="gap:8px">${lignes}</div>
+    <div class="pousse"></div>
+    ${h.pause ? '<div class="bandeau" style="text-align:center">En pause</div>' : ''}
+    <button class="btn-principal" style="height:64px" data-action="${h.pause ? 'pause-toggle' : 'etape-ok'}">${h.pause ? 'Reprendre' : libelle}</button>
+    <div class="ligne" style="justify-content:space-between">
+      <button class="btn-lien" data-action="pause-toggle">${h.pause ? 'Reprendre' : 'Pause'}</button>
+      <button class="btn-lien" data-action="etape-passer">Passer l'étape</button>
+    </div>
+  </main>`;
+}
+
+// Chronos Hyrox : étape (chrono), repos et durées (compte à rebours), EMOM (minute par minute).
+function ticHyrox() {
+  const h = d.enCoursHyrox;
+  if (ui.ecran !== 'hyrox-seance' || !h) return;
+  const temps = document.getElementById('h-temps');
+  const sous = document.getElementById('h-sous');
+  if (!temps) return;
+  const maintenant = h.pause || Date.now();
+  const el = (maintenant - h.debutEtape) / 1000;
+  const total = (maintenant - h.debut) / 1000;
+  const et = etapeCourante();
+  const signal = (cle) => {
+    if (h.signal === cle || h.pause) return;
+    h.signal = cle;
+    enregistrer();
+    if (document.visibilityState === 'visible') {
+      ui.flash = true;
+      rendre();
+      setTimeout(() => { ui.flash = false; rendre(); }, 2500);
+    }
+  };
+  if (et.repos || et.duree) {
+    const reste = (et.repos || et.duree) - el;
+    if (reste > 0) {
+      temps.textContent = mmss(Math.ceil(reste));
+      sous.textContent = `${et.repos ? 'de repos' : 'restantes'} · total ${mmss(total)}`;
+    } else {
+      temps.textContent = '0:00';
+      sous.textContent = `Terminé · touche le bouton pour continuer · total ${mmss(total)}`;
+      signal(`fin-${h.b}-${h.t}-${h.e}`);
+    }
+  } else if (et.emom) {
+    const minute = Math.floor(el / 60) + 1;
+    if (minute > et.emom) {
+      temps.textContent = '0:00';
+      sous.textContent = `EMOM terminé · total ${mmss(total)}`;
+      signal(`fin-${h.b}-${h.t}-${h.e}`);
+    } else {
+      temps.textContent = mmss(60 - (el % 60));
+      sous.textContent = `Minute ${minute} sur ${et.emom} · total ${mmss(total)}`;
+      if (minute > 1) signal(`emom-${h.b}-${h.t}-${h.e}-${minute}`);
+    }
+  } else {
+    temps.textContent = mmss(el);
+    sous.textContent = `total ${mmss(total)}`;
+  }
+}
+
+function demarrerHyrox(id) {
+  const s = seanceHyrox(id);
+  const maintenant = Date.now();
+  d.enCoursHyrox = {
+    id, nom: s.nom, debut: maintenant, blocs: JSON.parse(JSON.stringify(s.blocs(d.hyroxAjust[id] || 0))),
+    b: 0, t: 0, e: 0, debutEtape: maintenant, splits: [], pause: null, signal: null,
+  };
+  enregistrer();
+  ui.ecran = 'hyrox-seance';
+  garderEcranAllume();
+  rendre();
+  window.scrollTo(0, 0);
+}
+
+function avancerHyrox(passe) {
+  const h = d.enCoursHyrox;
+  const et = etapeCourante();
+  const maintenant = Date.now();
+  h.splits.push({ b: h.b, t: h.t, e: h.e, texte: et.texte, duree: Math.round((maintenant - h.debutEtape) / 1000), passe: Boolean(passe), repos: Boolean(et.repos), mesure: et.mesure || null });
+  h.e++;
+  const bloc = h.blocs[h.b];
+  if (h.e >= bloc.etapes.length) { h.e = 0; h.t++; }
+  if (h.t >= bloc.tours) { h.t = 0; h.b++; }
+  h.debutEtape = maintenant;
+  h.signal = null;
+  if (h.b >= h.blocs.length) { finirHyrox(); return; }
+  enregistrer();
+  rendre();
+  window.scrollTo(0, 0);
+}
+
+function finirHyrox() {
+  const h = d.enCoursHyrox;
+  const fin = h.pause || Date.now();
+  ui.finInfos = [];
+  // Séance test : les temps mesurés deviennent les repères.
+  const mesures = {};
+  for (const x of h.splits) if (x.mesure && !x.passe) mesures[x.mesure] = x.duree;
+  if (Object.keys(mesures).length) {
+    const r = reperesDepuisTest(mesures);
+    d.hyroxProfil = d.hyroxProfil || { mode: 'libre', reperes: {}, hyroxParSemaine: 2 };
+    d.hyroxProfil.reperes = { ...(d.hyroxProfil.reperes || {}), ...r };
+    if (r.course10k) ui.finInfos.push(`10 km estimé à ${ecrireTemps(r.course10k)} (${mmss(r.course10k / 10)} /km)`);
+    if (r.ski1k) ui.finInfos.push(`SkiErg : ${mmss(r.ski1k / 2)} /500 m`);
+    if (r.rameur1k) ui.finInfos.push(`Rameur : ${mmss(r.rameur1k / 2)} /500 m`);
+  }
+  const s = {
+    id: `h${h.debut}`, date: aujourdhui(), debut: h.debut, fin, seance: `hyrox:${h.id}`, nom: h.nom, exercices: [],
+    hyrox: { total: Math.round((fin - h.debut) / 1000), splits: h.splits, ressenti: null, ajustAvant: d.hyroxAjust[h.id] || 0 },
+  };
+  d.historique.push(s);
+  d.enCoursHyrox = null;
+  libererEcran();
+  enregistrer();
+  ui.ecran = 'hyrox-fin';
+  ui.finId = s.id;
+  rendre();
+  window.scrollTo(0, 0);
+}
+
+function ecranHyroxFin() {
+  const s = d.historique.find((x) => x.id === ui.finId);
+  if (!s?.hyrox) { ui.ecran = 'hyrox'; return ecranHyrox(); }
+  const sp = s.hyrox.splits;
+  const btnR = (v, t) => `<button data-action="ressenti-h" data-v="${v}" class="${s.hyrox.ressenti === v ? 'on' : ''}" aria-pressed="${s.hyrox.ressenti === v}">${t}</button>`;
+  // Temps par tour des blocs à plusieurs tours, détail par étape sinon.
+  const blocs = [...new Set(sp.map((x) => x.b))];
+  const detail = blocs.map((b) => {
+    const de = sp.filter((x) => x.b === b);
+    const nbTours = Math.max(...de.map((x) => x.t)) + 1;
+    if (nbTours > 1) {
+      return Array.from({ length: nbTours }, (_, t) => `<div><span>Tour ${t + 1}</span><span class="petit" style="font-size:14px">${mmss(de.filter((x) => x.t === t).reduce((a, x) => a + x.duree, 0))}</span></div>`).join('');
+    }
+    return de.filter((x) => !x.repos).map((x) => `<div><span>${esc(x.texte)}</span><span class="petit" style="font-size:14px">${x.passe ? 'passé' : mmss(x.duree)}</span></div>`).join('');
+  }).join('');
+  return `<main class="ecran theme-hyrox">
+    <div class="pile" style="gap:6px"><div class="sur-titre">${esc(s.nom)} · ${dateLongue(s.date)}</div><h1>Séance terminée</h1></div>
+    ${(ui.finInfos || []).map((t) => `<div class="bandeau">${esc(t)}</div>`).join('')}
+    <div class="carte pile" style="align-items:center;gap:2px;padding:18px">
+      <div class="petit">Temps total</div><div class="temps-h">${mmss(s.hyrox.total)}</div>
+    </div>
+    <div class="carte pile" style="gap:12px;padding:16px">
+      <div style="font-size:15px;font-weight:600">Comment était cette séance&nbsp;?</div>
+      <div class="grille3 choix-ressenti" style="gap:8px">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
+      <div class="petit">Facile : un tour de plus la prochaine fois. Dur : un tour de moins.</div>
+    </div>
+    <div class="carte liste-perf">${detail}</div>
+    <button class="btn-principal" data-action="onglet" data-id="hyrox">Retour</button>
+  </main>`;
+}
+
+function ecranHyroxProfil() {
+  const f = ui.hp;
+  const auj = aujourdhui();
+  const restantes = f.mode === 'competition' ? semainesRestantes(f.date, auj) : 0;
+  const conseil = repartitionConseillee(restantes);
+  const puce = (champ, v, t) => `<button class="puce ${f[champ] === v ? 'on' : ''}" data-action="hp" data-champ="${champ}" data-v="${v}" aria-pressed="${f[champ] === v}">${t}</button>`;
+  const repere = (cle, label, unite, diviseur) => {
+    const s = lireTemps(f.reperes[cle]);
+    return `<label class="repere"><span class="lib">${label}</span>
+      <input data-repere="${cle}" inputmode="numeric" placeholder="mm:ss" value="${esc(f.reperes[cle] || '')}" aria-label="${label}, temps">
+      <span class="petit al" id="al-${cle}">${s ? `${mmss(s / diviseur)} ${unite}` : 'Je ne sais pas'}</span></label>`;
+  };
+  return `<main class="ecran theme-hyrox">
+    <div class="ligne">
+      <button class="btn-icone" data-action="onglet" data-id="hyrox" aria-label="Retour">${ICONES.retour}</button>
+      <h1 style="flex:1;font-size:26px">Ton profil Hyrox</h1>
+    </div>
+    <div class="segment">
+      <button class="${f.mode === 'competition' ? 'on' : ''}" data-action="hp" data-champ="mode" data-v="competition">Préparer une compétition</button>
+      <button class="${f.mode === 'libre' ? 'on' : ''}" data-action="hp" data-champ="mode" data-v="libre">Hyrox libre</button>
+    </div>
+    ${f.mode === 'competition' ? `<label class="carte ligne" style="min-height:64px">
+      <span class="pile" style="gap:2px;flex:1"><span class="petit">Date de la compétition</span>
+      <input type="date" id="hp-date" class="champ-date" min="${auj}" value="${esc(f.date || '')}"></span>
+      <span class="label" style="color:var(--accent);font-size:12px">${restantes ? `${restantes} semaine${restantes > 1 ? 's' : ''}` : ''}</span>
+    </label>` : ''}
+    <div class="pile" style="gap:8px">
+      <div class="sur-titre">Catégorie</div>
+      <div class="puces">${puce('niveau', 'open', 'Open')}${puce('niveau', 'pro', 'Pro')}</div>
+      <div class="puces">${puce('format', 'solo', 'Solo')}${puce('format', 'duo', 'Duo')}</div>
+      <div class="puces">${puce('genre', 'femme', 'Femme')}${puce('genre', 'homme', 'Homme')}${puce('genre', 'mixte', 'Mixte')}</div>
+    </div>
+    <div class="pile" style="gap:8px">
+      <div class="sur-titre">Tes 3 séances par semaine</div>
+      <div class="carte pile" style="gap:10px">
+        <div class="ligne"><span style="flex:1;font-weight:600">Hyrox</span>
+          <div class="stepper"><button data-action="hp-h" data-d="-1" aria-label="Moins d'Hyrox">−</button><div class="val" style="min-width:40px">${f.hyroxParSemaine}</div><button data-action="hp-h" data-d="1" aria-label="Plus d'Hyrox">+</button></div></div>
+        <div class="ligne"><span style="flex:1;font-weight:600">Muscu</span><div class="val chiffre" style="font-size:20px;min-width:40px;text-align:center;margin-right:48px">${3 - f.hyroxParSemaine}</div></div>
+        <div class="petit" style="color:var(--accent)">${f.mode === 'competition' && restantes ? `Conseillé à ${restantes} semaine${restantes > 1 ? 's' : ''} de la compétition : ${conseil} Hyrox + ${3 - conseil} muscu` : `Conseillé : ${conseil} Hyrox + ${3 - conseil} muscu`}</div>
+      </div>
+    </div>
+    <div class="pile" style="gap:8px">
+      <div class="sur-titre">Tes repères (pour calculer tes allures)</div>
+      <div class="carte pile" style="gap:0;padding:4px 14px">
+        ${repere('course10k', '10 km course', '/km', 10)}
+        ${repere('rameur1k', '1 000 m rameur', '/500 m', 2)}
+        ${repere('ski1k', '1 000 m SkiErg', '/500 m', 2)}
+      </div>
+      <div class="petit">Laisse vide si tu ne sais pas : la séance test les mesure pour toi.</div>
+    </div>
+    <div class="barre-action theme-hyrox-fond">
+      <button class="btn-principal" data-action="hp-ok">${f.mode === 'competition' ? (d.hyroxProfil ? 'Enregistrer et mettre à jour le plan' : 'Créer mon plan') : 'Enregistrer'}</button>
+    </div>
   </main>`;
 }
 
@@ -926,6 +1360,21 @@ function modalHtml() {
       <div class="petit">Seule la séance enregistrée est supprimée, pas ton historique.</div>
       <button class="btn-secondaire btn-danger" data-action="suppr-perso-ok">Oui, supprimer</button>
       <button class="btn-principal" data-action="fermer">Annuler</button>`;
+  } else if (m.type === 'quitter-h') {
+    contenu = `
+      <h2>Quitter la séance&nbsp;?</h2>
+      <button class="btn-secondaire" data-action="pause-h">Revenir plus tard (garder en cours)</button>
+      ${d.enCoursHyrox.splits.length ? '<button class="btn-secondaire" data-action="terminer-h">Terminer et enregistrer</button>' : ''}
+      <button class="btn-secondaire btn-danger" data-action="abandonner-h">Abandonner sans enregistrer</button>
+      <button class="btn-principal" data-action="fermer">Continuer la séance</button>`;
+  } else if (m.type === 'plan') {
+    const plan = genererPlan(d.hyroxProfil, aujourdhui());
+    contenu = `<h2>Tout le plan</h2>
+      ${plan.map((w) => `<div class="carte pile" style="gap:6px">
+        <div class="ligne"><div style="flex:1;font-weight:600">Semaine ${w.index + 1} · du ${dateCourte(w.debut)} au ${dateCourte(w.fin)}</div><div class="label" style="color:var(--accent);font-size:11px">${w.phase}</div></div>
+        <div class="petit">${w.items.map(nomItem).join(' · ')}</div>
+      </div>`).join('')}
+      <button class="btn-principal" data-action="fermer">Fermer</button>`;
   } else if (m.type === 'quitter') {
     const faites = d.enCours.exercices.reduce((t, e) => t + e.series.length, 0);
     contenu = `
@@ -938,7 +1387,8 @@ function modalHtml() {
     const s = d.historique.find((h) => h.id === m.id);
     contenu = `
       <h2>${esc(s.nom || s.seance)}</h2>
-      <div class="petit">${dateLongue(s.date)}${s.importee ? ' · importée' : ''}</div>
+      <div class="petit">${dateLongue(s.date)}${s.importee ? ' · importée' : ''}${s.hyrox ? ` · ${mmss(s.hyrox.total)}${s.hyrox.ressenti ? ` · ${s.hyrox.ressenti}` : ''}` : ''}</div>
+      ${s.hyrox ? `<div class="carte liste-perf">${s.hyrox.splits.filter((x) => !x.repos).map((x) => `<div><span>${esc(x.texte)}</span><span class="petit" style="font-size:14px">${x.passe ? 'passé' : mmss(x.duree)}</span></div>`).join('')}</div>` : ''}
       ${s.exercices.map((e) => `<div class="carte"><div style="font-weight:600">${esc(nomExo(e.exo, e.nom))}</div><div class="petit">${resumeSeries(e.series, exo(e.exo))}</div></div>`).join('')}
       ${m.confirmer ? `<div class="petit">Supprimer définitivement cette séance&nbsp;?</div>
         <button class="btn-secondaire btn-danger" data-action="supprimer-seance" data-id="${esc(s.id)}">Oui, supprimer</button>`
@@ -957,7 +1407,8 @@ function modalHtml() {
       ${m.inconnus?.length ? `<div class="petit">Gardés dans l'historique mais absents du catalogue : ${m.inconnus.map(esc).join(', ')}.</div>` : ''}
       <button class="btn-principal" data-action="fermer">OK</button>`;
   }
-  const theme = m.type === 'options' && d.enCours && estHaltero(exo(exoCourant().exo)) ? 'theme-haltero' : '';
+  const theme = m.type === 'options' && d.enCours && estHaltero(exo(exoCourant().exo)) ? 'theme-haltero'
+    : ['quitter-h', 'plan'].includes(m.type) ? 'theme-hyrox' : '';
   return `<div class="voile" data-action="voile"><div class="feuille ${theme}" role="dialog" aria-modal="true">${contenu}</div></div>`;
 }
 
@@ -974,6 +1425,12 @@ function rendre() {
   else if (ui.ecran === 'exercices') html = ecranExercices();
   else if (ui.ecran === 'detail' && exo(ui.exoDetail)) html = ecranDetail();
   else if (ui.ecran === 'reglages') html = ecranReglages();
+  else if (ui.ecran === 'hyrox-seance' && d.enCoursHyrox) html = ecranHyroxSeance();
+  else if (ui.ecran === 'hyrox-fin') html = ecranHyroxFin();
+  else if (ui.ecran === 'hyrox-profil') html = ecranHyroxProfil();
+  else if (ui.ecran === 'hyrox-apercu' && seanceHyrox(ui.hyroxApercu)) html = ecranHyroxApercu();
+  else if (ui.ecran === 'hyrox-libre') html = ecranHyroxLibre(true);
+  else if (ui.ecran === 'hyrox' || ui.ecran === 'hyrox-seance') { ui.ecran = 'hyrox'; html = ecranHyrox(); }
   else { ui.ecran = 'accueil'; html = ecranAccueil(); }
   const scrollFeuille = document.querySelector('.feuille')?.scrollTop || 0;
   $app.innerHTML = html + modalHtml() + (ui.toast ? `<div class="toast" role="status">${esc(ui.toast)}</div>` : '') + (ui.flash ? '<div class="flash"></div>' : '');
@@ -981,6 +1438,7 @@ function rendre() {
   if (f && ui.modalGardeScroll) f.scrollTop = scrollFeuille;
   ui.modalGardeScroll = false;
   if (ui.ecran === 'recup') tic();
+  if (ui.ecran === 'hyrox-seance') ticHyrox();
 }
 
 // Minuteur : calculé à partir de l'heure de fin, donc juste à la seconde même après un verrouillage.
@@ -1017,10 +1475,11 @@ function tic() {
   }
 }
 
-setInterval(tic, 250);
+setInterval(() => { tic(); ticHyrox(); }, 250);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     tic();
+    ticHyrox();
     garderEcranAllume();
   }
 });
@@ -1037,7 +1496,7 @@ function recalculerPlan(e, def) {
 
 const actions = {
   onglet(el) {
-    ui.ecran = { seances: 'accueil', progression: 'progression', exercices: 'exercices' }[el.dataset.id] || 'accueil';
+    ui.ecran = { seances: 'accueil', hyrox: 'hyrox', progression: 'progression', exercices: 'exercices' }[el.dataset.id] || 'accueil';
     ui.modal = null;
     window.scrollTo(0, 0);
   },
@@ -1237,6 +1696,68 @@ const actions = {
     toast('Données effacées');
     return false;
   },
+  'hyrox-profil'() {
+    const p = d.hyroxProfil;
+    const r = p?.reperes || {};
+    ui.hp = {
+      mode: p?.mode || 'competition', date: p?.date || '', niveau: p?.niveau || 'open', format: p?.format || 'duo',
+      genre: p?.genre || 'femme', hyroxParSemaine: p?.hyroxParSemaine || 2,
+      reperes: { course10k: ecrireTemps(r.course10k), rameur1k: ecrireTemps(r.rameur1k), ski1k: ecrireTemps(r.ski1k) },
+    };
+    ui.ecran = 'hyrox-profil';
+    window.scrollTo(0, 0);
+  },
+  hp(el) { ui.hp[el.dataset.champ] = el.dataset.v; },
+  'hp-h'(el) { ui.hp.hyroxParSemaine = Math.min(3, Math.max(1, ui.hp.hyroxParSemaine + Number(el.dataset.d))); },
+  'hp-ok'() {
+    const f = ui.hp;
+    if (f.mode === 'competition' && (!f.date || f.date < aujourdhui())) { toast('Choisis une date de compétition à venir'); return false; }
+    const reperes = {};
+    for (const [k, v] of Object.entries(f.reperes)) {
+      const s = lireTemps(v);
+      if (v && !s) { toast('Temps à écrire sous la forme mm:ss (ex. 55:00)'); return false; }
+      if (s) reperes[k] = s;
+    }
+    d.hyroxProfil = { mode: f.mode, date: f.mode === 'competition' ? f.date : (d.hyroxProfil?.date || ''), niveau: f.niveau, format: f.format, genre: f.genre, hyroxParSemaine: f.hyroxParSemaine, reperes };
+    enregistrer();
+    ui.ecran = 'hyrox';
+    toast(f.mode === 'competition' ? 'Plan créé' : 'Profil enregistré');
+    return false;
+  },
+  'hyrox-libre'() { ui.ecran = 'hyrox-libre'; window.scrollTo(0, 0); },
+  'hyrox-apercu'(el) { ui.hyroxApercu = el.dataset.id; ui.ecran = 'hyrox-apercu'; window.scrollTo(0, 0); },
+  'voir-plan'() { ui.modal = { type: 'plan' }; },
+  'go-hyrox'(el) { demarrerHyrox(el.dataset.id); return false; },
+  'reprendre-h'() { ui.ecran = 'hyrox-seance'; garderEcranAllume(); window.scrollTo(0, 0); },
+  'etape-ok'() { avancerHyrox(false); return false; },
+  'etape-passer'() { if (d.enCoursHyrox.pause) actions['pause-toggle'](); avancerHyrox(true); return false; },
+  'pause-toggle'() {
+    const h = d.enCoursHyrox;
+    if (h.pause) {
+      const decalage = Date.now() - h.pause;
+      h.debut += decalage;
+      h.debutEtape += decalage;
+      h.pause = null;
+    } else h.pause = Date.now();
+    enregistrer();
+  },
+  'quitter-h'() { ui.modal = { type: 'quitter-h' }; },
+  'pause-h'() { ui.modal = null; ui.ecran = 'hyrox'; libererEcran(); },
+  'terminer-h'() { ui.modal = null; finirHyrox(); return false; },
+  'abandonner-h'() {
+    d.enCoursHyrox = null;
+    libererEcran();
+    enregistrer();
+    ui.modal = null;
+    ui.ecran = 'hyrox';
+  },
+  'ressenti-h'(el) {
+    const s = d.historique.find((x) => x.id === ui.finId);
+    s.hyrox.ressenti = s.hyrox.ressenti === el.dataset.v ? null : el.dataset.v;
+    const id = s.seance.slice(6);
+    d.hyroxAjust[id] = s.hyrox.ressenti ? ajustement(s.hyrox.ajustAvant, s.hyrox.ressenti) : s.hyrox.ajustAvant;
+    enregistrer();
+  },
   async exporter() {
     const texte = JSON.stringify({ ...d, exporte: new Date().toISOString(), appli: 'suivi-muscu', versionAppli: VERSION }, null, 1);
     const nom = `suivi-muscu-${aujourdhui()}.json`;
@@ -1314,6 +1835,15 @@ $app.addEventListener('click', (ev) => {
 });
 
 $app.addEventListener('input', (ev) => {
+  const el = ev.target;
+  if (ui.hp && el.dataset.repere) {
+    ui.hp.reperes[el.dataset.repere] = el.value;
+    const s = lireTemps(el.value);
+    const span = document.getElementById(`al-${el.dataset.repere}`);
+    if (span) span.textContent = s ? `${mmss(s / (el.dataset.repere === 'course10k' ? 10 : 2))} ${el.dataset.repere === 'course10k' ? '/km' : '/500 m'}` : (el.value ? 'mm:ss' : 'Je ne sais pas');
+    return;
+  }
+  if (ui.hp && el.id === 'hp-date') { ui.hp.date = el.value; return; }
   if (ev.target.id === 'recherche' && ui.perso) {
     ui.perso.q = ev.target.value;
     majPerso();
@@ -1322,6 +1852,7 @@ $app.addEventListener('input', (ev) => {
 
 $app.addEventListener('change', (ev) => {
   const el = ev.target;
+  if (ui.hp && el.id === 'hp-date') { ui.hp.date = el.value; rendre(); return; }
   if (el.dataset.action === 'importer' && el.files?.[0]) {
     importerFichier(el.files[0]);
     el.value = '';
@@ -1333,6 +1864,9 @@ $app.addEventListener('change', (ev) => {
 demanderPersistance();
 if (d.enCours) {
   ui.ecran = d.enCours.recup ? 'recup' : 'exercice';
+  garderEcranAllume();
+} else if (d.enCoursHyrox) {
+  ui.ecran = 'hyrox-seance';
   garderEcranAllume();
 }
 rendre();

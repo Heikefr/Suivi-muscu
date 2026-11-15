@@ -23,4 +23,4 @@ une sauvegarde de l'appli ou l'ancien suivi Google Sheet exporté en CSV.
 Aucun outil de compilation : HTML, CSS et JavaScript modules.
 Tests : `npm test` (Node 22). Penser à changer `VERSION` dans `sw.js` à chaque mise en ligne.
 
-Prévu pour la version 2 : course et entraînements Hyrox.
+Hyrox (0.3) : profil (compétition à date ou libre), plan semaine par semaine jusqu'à la compétition, séances types guidées avec chronos (étapes, repos, EMOM), allures calculées depuis les repères, séance test.

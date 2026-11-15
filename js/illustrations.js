@@ -148,6 +148,32 @@ const DESSINS = {
     + barre(38, 64, 26) + sol,
   'push-press': debout('M48 50L54 66L48 86M48 50L42 66L42 86') + p('M48 28L38 10M48 28L58 10', A)
     + barre(26, 70, 8) + sol,
+
+  // Hyrox
+  'h-course': tete(52, 14) + p('M50 22L44 48') + p('M44 48L58 62L52 84', A) + p('M44 48L34 66L22 70', A)
+    + p('M48 28L60 40M48 28L36 38') + sol,
+  'h-ski': p('M70 6V88', G) + p('M70 10L56 44', G) + tete(40, 22) + p('M42 30L46 54') + p('M46 54L40 86M46 54L52 86')
+    + p('M44 34L56 46', A) + p('M50 44H62', A) + sol,
+  'h-rameur': p('M10 76H88', G) + p('M80 50V76', G) + tete(36, 40) + p('M38 48L30 70') + p('M30 70H48L58 74', A)
+    + p('M40 52L74 56', A) + p('M76 50V62', G),
+  'h-sled-push': p('M64 54H86V80H62Z', G) + p('M72 54V30', G) + tete(30, 30) + p('M34 36L52 52') + p('M38 40L70 36', A)
+    + p('M52 52L46 66L40 86M52 52L60 68L66 84') + sol,
+  'h-sled-pull': p('M8 62H28V82H8Z', G) + p('M28 70L56 44', A) + tete(64, 24) + p('M62 32L66 56')
+    + p('M64 38L56 44') + p('M66 56L58 70L60 86M66 56L76 70L80 86') + sol,
+  'h-bbj': tete(30, 30) + p('M32 38L44 52') + p('M44 52L36 66L40 78M44 52L52 66L48 78') + p('M34 42L22 50M36 42L48 36')
+    + p('M58 64Q70 40 84 64', A) + p('M80 60L84 64L80 68', A) + sol,
+  'h-farmers': debout() + p('M48 28L40 54M48 28L56 54', A) + p('M36 54H44V64H36ZM52 54H60V64H52Z', A) + sol,
+  'h-fentes': tete(48, 18) + p('M48 26V50') + p('M36 22H60', A) + p('M40 22L48 26L56 22', A)
+    + p('M48 50L64 58L64 86M48 50L36 70L24 86') + sol,
+  'h-wallball': p('M84 4V88', G) + p('M76 14H84', G) + `<circle cx="62" cy="18" r="7" stroke="${A}"></circle>`
+    + tete(40, 22) + p('M40 30L42 54') + p('M42 54L54 64L50 86M42 54L34 66L32 86') + p('M40 34L56 22', A) + sol,
+  'h-velo': `<circle cx="26" cy="72" r="13" stroke="${G}"></circle><circle cx="72" cy="72" r="13" stroke="${G}"></circle>`
+    + p('M26 72L44 50H66L72 72M44 50L50 72', G) + tete(46, 22) + p('M46 30L42 48') + p('M42 48L52 62L50 72', A)
+    + p('M46 34L62 46'),
+  'h-mobilite': tete(48, 20) + p('M48 28V54') + p('M48 34L26 22M48 34L70 22', A) + p('M48 54L36 86M48 54L60 86') + sol,
+  'h-repos': `<circle cx="48" cy="48" r="30" stroke="${G}"></circle>` + p('M48 28V48L62 58', A),
+  'h-emom': `<circle cx="48" cy="52" r="30" stroke="${C}"></circle>` + p('M40 12H56M48 12V22', G) + p('M48 52V30', A)
+    + p('M48 52A22 22 0 0 1 70 52', A),
 };
 
 export function illustration(dessin, nom, taille = 96) {

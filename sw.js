@@ -1,6 +1,6 @@
 // Fonctionnement hors ligne (salle sans réseau).
 // Changer VERSION à chaque mise en ligne pour que le téléphone récupère la nouvelle version.
-const VERSION = 'suivi-muscu-0.2.1';
+const VERSION = 'suivi-muscu-0.3.0';
 const FICHIERS = [
   './',
   'index.html',
@@ -12,6 +12,7 @@ const FICHIERS = [
   'js/import.js',
   'js/stockage.js',
   'js/illustrations.js',
+  'js/hyrox.js',
   'icons/icon-192.png',
   'icons/apple-touch-icon.png',
 ];
