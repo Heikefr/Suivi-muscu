@@ -371,6 +371,7 @@ function ecranComposer() {
     const def = exo(k.exo);
     const cible = cibleFinale(def, k.cible);
     return `<div class="case-seance">
+      <span class="mini-dessin">${illustration(def.dessin, def.nom, 40)}</span>
       <button class="case-choix" data-action="choix" data-i="${i}">
         <span class="label petit" style="font-size:11px">${esc(k.role)}</span>
         <span class="nom-case">${esc(def.nom)} ${ICONES.chevron}</span>
@@ -425,6 +426,7 @@ function lignePerso(id) {
   const on = pos >= 0;
   return `<button class="ligne-coche ${on ? 'on' : ''} ${estHaltero(def) ? 'h' : ''}" data-action="cocher" data-id="${id}" aria-pressed="${on}">
     <span class="coche">${on ? '<svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l3 3 5-6"></path></svg>' : ''}</span>
+    <span class="mini-dessin">${illustration(def.dessin, def.nom, 40)}</span>
     <span class="txt"><span class="nom">${esc(def.nom)}</span><span class="petit">${esc(def.muscles)} · ${esc(infoExo(id))}</span></span>
     ${on ? `<span class="ordre">${pos + 1}</span>` : ''}
   </button>`;

@@ -330,3 +330,7 @@ button.conseillee { width: 100%; font-family: inherit; }
   font-size: 18px; font-weight: 700;
 }
 .choix-reps button.on { background: var(--accent); border-color: var(--accent); color: var(--fond); }
+
+.ligne-coche .mini-dessin, .case-seance .mini-dessin { display: flex; }
+.case-seance { padding-left: 10px; }
+.ligne-coche { padding-left: 10px; }
