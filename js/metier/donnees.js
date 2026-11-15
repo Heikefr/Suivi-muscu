@@ -270,10 +270,12 @@ for (const s of SEANCES) {
 
 const PAR_ID = new Map(EXERCICES.map((e) => [e.id, e]));
 
+/** Fiche d'un exercice à partir de son identifiant. */
 export function exo(id) {
   return PAR_ID.get(id) || null;
 }
 
+/** Programme d'une séance (push, pull, jambes) à partir de son identifiant. */
 export function seance(id) {
   return SEANCES.find((s) => s.id === id) || null;
 }

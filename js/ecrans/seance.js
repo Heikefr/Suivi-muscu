@@ -1,3 +1,9 @@
+// =====================================================================
+// Écrans d'une séance de musculation en cours
+// ---------------------------------------------------------------------
+// Exercice (musculation ou haltérophilie), récupération avec minuteur, écran de fin.
+// =====================================================================
+
 import { ICONES, chargeTexte, estHaltero, nomExo, repsTexte } from '../commun.js';
 import { ecranAccueil } from './accueil.js';
 import { d, enregistrer, rendre, toast, ui } from '../etat.js';
@@ -10,7 +16,8 @@ import {
   terminer, validerSerie,
 } from '../seance-muscu.js';
 
-export function enteteSeance(theme) {
+/** Haut de l'écran : bouton quitter, nom de la séance, avancement. */
+function enteteSeance(theme) {
   const ec = d.enCours;
   const barres = ec.exercices.map((x) => `<div class="${x.series.length >= x.cible.series ? 'fait' : ''}"></div>`).join('');
   return `<div class="ligne">
@@ -22,6 +29,7 @@ export function enteteSeance(theme) {
     </div>`;
 }
 
+/** Écran d'un exercice de musculation (délègue à ecranHaltero pour l'haltérophilie). */
 export function ecranExercice() {
   const e = exoCourant();
   const def = exo(e.exo);
@@ -84,7 +92,8 @@ export function ecranExercice() {
   </main>`;
 }
 
-export function ecranHaltero(e, def) {
+/** Écran d'un mouvement d'haltérophilie : charges en % du record, réussi / raté. */
+function ecranHaltero(e, def) {
   const fait = e.series.length;
   const total = e.cible.series;
   const reps = e.cible.repsMin;
@@ -130,6 +139,7 @@ export function ecranHaltero(e, def) {
   </main>`;
 }
 
+/** Écran de récupération : minuteur, ressenti de la série, aperçu de la suite. */
 export function ecranRecup() {
   const ec = d.enCours;
   const r = ec.recup;
@@ -177,6 +187,7 @@ export function ecranRecup() {
   </main>`;
 }
 
+/** Résumé d'un exercice fait : « 3 × 10 à 40 kg ». */
 export function resumeSeries(series, def) {
   if (def?.unite === 's') return `${series.length} × ${series.map((s) => s.reps).join(' / ')} s`;
   if (estHaltero(def)) return series.map((s) => `${nb(s.charge)} kg×${s.reps}`).join(' · ');
@@ -185,6 +196,7 @@ export function resumeSeries(series, def) {
   return `${series.length} séries · ${reps} reps · ${nb(chargeDe(series))} kg`;
 }
 
+/** Écran de fin de séance : résumé et ressenti global. */
 export function ecranFin() {
   const s = d.historique.find((h) => h.id === ui.finId);
   if (!s) { ui.ecran = 'accueil'; return ecranAccueil(); }

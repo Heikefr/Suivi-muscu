@@ -1,3 +1,9 @@
+// =====================================================================
+// Réglages
+// ---------------------------------------------------------------------
+// Sauvegarde, restauration, import de l'ancien tableur et remise à zéro.
+// =====================================================================
+
 import { ICONES, nomExo } from '../commun.js';
 import { VERSION, d, enregistrer, remplacerDonnees, rendre, toast, ui } from '../etat.js';
 import { fusionner, importerCsv } from '../metier/import.js';
@@ -35,6 +41,7 @@ export function ecranReglages() {
   </main>`;
 }
 
+/** Lit un fichier choisi par l'utilisateur : sauvegarde (.json) ou ancien tableur (.csv). */
 export async function importerFichier(fichier) {
   const texte = await fichier.text();
   try {

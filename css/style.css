@@ -105,7 +105,6 @@ h2 { margin: 0; font-family: var(--titre); font-size: 22px; font-weight: 700; li
 
 /* Accueil */
 .semaine { display: flex; align-items: center; gap: 12px; }
-.points { display: flex; gap: 8px; }
 .point { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--gris); }
 .point.fait { background: var(--accent); border-color: var(--accent); }
 
@@ -234,8 +233,6 @@ button.case { background: var(--carte); border: 1px solid var(--bord); border-ra
 .exclu { opacity: .5; }
 .liste-perf { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
 .liste-perf div { display: flex; justify-content: space-between; gap: 12px; }
-.case-a-cocher { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; }
-.case-a-cocher input { width: 22px; height: 22px; accent-color: var(--accent); }
 .cache { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
 
 /* ---------- 0.2 ---------- */

@@ -1,24 +1,35 @@
+// =====================================================================
+// Éléments d'interface communs à plusieurs écrans
+// ---------------------------------------------------------------------
+// Libellés d'un exercice (nom, charge, répétitions), icônes et barre d'onglets.
+// =====================================================================
+
 import { d } from './etat.js';
 import { exo } from './metier/donnees.js';
 import { chargeDe, historiqueExo, seancesMemeCharge } from './metier/progression.js';
 import { ilYa, nb } from './outils.js';
 
+/** Nom d'un exercice ; `secours` sert pour un exercice importé qui n'est plus au catalogue. */
 export function nomExo(id, secours) {
   return exo(id)?.nom || secours || id;
 }
 
+/** Vrai pour un mouvement d'haltérophilie (affiché différemment, charges en % du record). */
 export const estHaltero = (def) => def?.type === 'haltero';
 
+/** Charge lisible : « 40 kg », « Poids du corps », « +5 kg ». */
 export function chargeTexte(c, def) {
   if (def?.poidsDuCorps) return 'Poids du corps';
   if (c == null) return 'À choisir';
   return `${nb(c)} kg`;
 }
 
+/** Répétitions lisibles (ou secondes pour un exercice tenu). */
 export function repsTexte(n, def) {
   return def?.unite === 's' ? `${n} s` : `${n} reps`;
 }
 
+/** Objectif lisible : « 3 × 8-12 ». */
 export function cibleTexte(c, def) {
   const u = def?.unite === 's' ? ' s' : '';
   return c.repsMin === c.repsMax ? `${c.series} × ${c.repsMin}${u}` : `${c.series} × ${c.repsMin}–${c.repsMax}${u}`;
@@ -54,6 +65,7 @@ export const ICONES = {
   loupe: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--doux)" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="5"></circle><path d="M12 12l4 4"></path></svg>',
 };
 
+/** Barre d'onglets du bas ; `actif` = onglet surligné. */
 export function nav(actif) {
   const b = (id, nom) => `<button data-action="onglet" data-id="${id}" class="${actif === id ? 'actif' : ''}" ${actif === id ? 'aria-current="page"' : ''}>${ICONES[id]}${nom}</button>`;
   return `<nav class="nav ${actif === 'hyrox' ? 'theme-hyrox' : ''}"><div>${b('seances', 'Muscu')}${b('hyrox', 'Hyrox')}${b('progression', 'Progression')}${b('exercices', 'Exercices')}</div></nav>`;

@@ -6,8 +6,10 @@ import { mmss } from '../outils.js';
 
 // ---------- Étapes ----------
 
+/** Distance lisible : 800 → « 800 m », 1500 → « 1,5 km ». */
 const dist = (m) => (m >= 1000 ? `${String(m / 1000).replace('.', ',')} km` : `${m} m`);
 
+/** Étapes : chaque fonction fabrique une étape de séance (texte, schéma, allure ou charge). */
 const course = (m, mode = 'compromis') => ({
   texte: `${dist(m)} course`, dessin: 'h-course', allure: { type: 'course', mode },
   conseil: 'Foulée courte et relâchée. Ne pars pas trop vite après un atelier.',
@@ -79,6 +81,7 @@ export function niveauCharges(profil) {
   return niveau === 'pro' ? 2 : 1;
 }
 
+/** Arrondit au multiple de 5 le plus proche. */
 const arrondi5 = (x) => Math.round(x / 5) * 5;
 
 // Texte de la charge d'une étape selon le niveau ('' si l'étape n'a pas de charge).
@@ -110,6 +113,7 @@ export function noteCharge(etape, niveau) {
 // ---------- Séances types ----------
 // a = ajustement selon le ressenti (−2 à +2 tours sur la partie principale).
 
+/** Nombre de tours ajusté par le ressenti (jamais moins de 1). */
 const tours = (base, a) => Math.max(1, base + a);
 const echauffementCourse = { nom: 'Échauffement', tours: 1, etapes: [courseMin(10, 'footing'), mobilite(5)] };
 const echauffementErgo = { nom: 'Échauffement', tours: 1, etapes: [velo(8), ski(250, 10), rameur(250, 10)] };
@@ -208,6 +212,7 @@ export const SEANCES_HYROX = [
 
 export const LIBRES = ['course-ateliers', 'ergo', 'intervalles-course', 'force-hyrox', 'course-facile', 'demi-simulation', 'simulation'];
 
+/** Séance type à partir de son identifiant. */
 export function seanceHyrox(id) {
   return SEANCES_HYROX.find((s) => s.id === id) || null;
 }
@@ -222,6 +227,7 @@ export function lireTemps(texte) {
   return s > 0 ? s : null;
 }
 
+/** Secondes → « 55:00 » ou « 1:02:30 ». */
 export function ecrireTemps(s) {
   if (!s) return '';
   const h = Math.floor(s / 3600);
@@ -257,6 +263,7 @@ export function reperesDepuisTest(mesures) {
 
 // ---------- Plan vers une compétition ----------
 
+/** Lundi (objet Date, en UTC) de la semaine d'une date AAAA-MM-JJ. */
 function lundi(iso) {
   const [a, m, j] = iso.split('-').map(Number);
   const d = new Date(Date.UTC(a, m - 1, j));
@@ -264,6 +271,7 @@ function lundi(iso) {
   return d;
 }
 
+/** Objet Date → AAAA-MM-JJ. */
 function iso(d) {
   return d.toISOString().slice(0, 10);
 }
@@ -281,10 +289,12 @@ export function semainesRestantes(dateCompet, aujourdHui) {
   return Math.max(1, Math.round((lundi(dateCompet) - lundiDepart(aujourdHui)) / (7 * 86400000)) + 1);
 }
 
+/** Nombre de jours jusqu'à la compétition. */
 export function joursRestants(dateCompet, aujourdHui) {
   return Math.round((new Date(`${dateCompet}T00:00:00Z`) - new Date(`${aujourdHui}T00:00:00Z`)) / 86400000);
 }
 
+/** Phase du plan selon le nombre de semaines restantes. */
 export function phaseSemaine(restantes) {
   if (restantes <= 1) return 'Compétition';
   if (restantes === 2) return 'Pic';

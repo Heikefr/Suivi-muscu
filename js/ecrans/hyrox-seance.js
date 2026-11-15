@@ -1,3 +1,11 @@
+// =====================================================================
+// Séance Hyrox en cours
+// ---------------------------------------------------------------------
+// Écran de la séance, chronos (étape, repos, EMOM), passage d'une étape à l'autre
+// et écran de fin. La séance en cours vit dans d.enCoursHyrox :
+//   b = bloc courant, t = tour courant, e = étape courante.
+// =====================================================================
+
 import { ICONES } from '../commun.js';
 import { ecranHyrox, ligneEtape } from './hyrox.js';
 import { d, enregistrer, rendre, ui } from '../etat.js';
@@ -8,11 +16,13 @@ import {
 import { aujourdhui, dateLongue, esc, mmss } from '../outils.js';
 import { garderEcranAllume, libererEcran } from '../seance-muscu.js';
 
-export function etapeCourante() {
+/** L'étape en cours. */
+function etapeCourante() {
   const h = d.enCoursHyrox;
   return h.blocs[h.b].etapes[h.e];
 }
 
+/** Écran de la séance en cours. */
 export function ecranHyroxSeance() {
   const h = d.enCoursHyrox;
   const bloc = h.blocs[h.b];
@@ -116,7 +126,8 @@ export function ticHyrox() {
   }
 }
 
-export function demarrerHyrox(id) {
+/** Démarre une séance : on copie ses blocs pour qu'elle ne change pas en route. */
+function demarrerHyrox(id) {
   const s = seanceHyrox(id);
   const maintenant = Date.now();
   d.enCoursHyrox = {
@@ -130,7 +141,8 @@ export function demarrerHyrox(id) {
   window.scrollTo(0, 0);
 }
 
-export function avancerHyrox(passe) {
+/** Note le temps de l'étape et passe à la suivante (`passe` = étape sautée). */
+function avancerHyrox(passe) {
   const h = d.enCoursHyrox;
   const et = etapeCourante();
   const maintenant = Date.now();
@@ -147,7 +159,8 @@ export function avancerHyrox(passe) {
   window.scrollTo(0, 0);
 }
 
-export function finirHyrox() {
+/** Clôt la séance et l'enregistre ; une séance test met aussi à jour les repères. */
+function finirHyrox() {
   const h = d.enCoursHyrox;
   const fin = h.pause || Date.now();
   ui.finInfos = [];
@@ -176,6 +189,7 @@ export function finirHyrox() {
   window.scrollTo(0, 0);
 }
 
+/** Écran de fin : temps total, détail et ressenti. */
 export function ecranHyroxFin() {
   const s = d.historique.find((x) => x.id === ui.finId);
   if (!s?.hyrox) { ui.ecran = 'hyrox'; return ecranHyrox(); }

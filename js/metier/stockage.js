@@ -2,23 +2,25 @@
 
 const CLE = 'suivi-muscu';
 
+/** Données d'un téléphone neuf. */
 export function vide() {
   return {
-    version: 1, historique: [], exclus: [], remplacements: {}, enCours: null,
+    version: 1, historique: [], exclus: [], enCours: null,
     records: {}, haltero: {}, seancesPerso: [],
     hyroxProfil: null, hyroxAjust: {}, enCoursHyrox: null,
   };
 }
 
+/** Renvoie v si c'est un objet simple, sinon un objet vide. */
 const objet = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
 
+/** Remet d'aplomb des données lues (sauvegarde ancienne ou abîmée) : chaque champ a une valeur sûre. */
 export function valider(d) {
   if (!d || typeof d !== 'object' || d.version !== 1 || !Array.isArray(d.historique)) return null;
   return {
     ...vide(),
     ...d,
     exclus: Array.isArray(d.exclus) ? d.exclus : [],
-    remplacements: objet(d.remplacements),
     records: objet(d.records),
     haltero: objet(d.haltero),
     seancesPerso: Array.isArray(d.seancesPerso) ? d.seancesPerso : [],
@@ -27,6 +29,7 @@ export function valider(d) {
   };
 }
 
+/** Lit les données du téléphone (ou repart de zéro). */
 export function charger() {
   try {
     const brut = localStorage.getItem(CLE);
@@ -41,6 +44,7 @@ export function charger() {
   return vide();
 }
 
+/** Écrit les données ; renvoie false si le téléphone refuse (stockage plein, navigation privée). */
 export function sauver(d) {
   try {
     localStorage.setItem(CLE, JSON.stringify(d));

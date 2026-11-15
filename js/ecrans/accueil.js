@@ -1,3 +1,9 @@
+// =====================================================================
+// Écran d'accueil (onglet Muscu)
+// ---------------------------------------------------------------------
+// Séance conseillée, Push / Pull / Jambes, séance personnalisée et séances enregistrées.
+// =====================================================================
+
 import { ICONES, nav } from '../commun.js';
 import { derniereFois, prochaineSeance } from '../composition.js';
 import { d } from '../etat.js';

@@ -1,3 +1,10 @@
+// =====================================================================
+// Écrans de composition
+// ---------------------------------------------------------------------
+//   - « Composer ta séance » : les exercices proposés pour Push / Pull / Jambes ;
+//   - « Séance personnalisée » : choix libre dans tout le catalogue.
+// =====================================================================
+
 import { ICONES, cibleTexte, estHaltero, infoExo } from '../commun.js';
 import { composer, dureeEstimee, prochaineSeance } from '../composition.js';
 import { d, enregistrer, rendre, toast, ui } from '../etat.js';
@@ -7,6 +14,7 @@ import { derniereDate } from '../metier/progression.js';
 import { esc, joursDepuis } from '../outils.js';
 import { demarrer } from '../seance-muscu.js';
 
+/** Écran « Composer ta séance ». */
 export function ecranComposer() {
   const c = ui.compo;
   const s = seance(c.seance);
@@ -45,7 +53,7 @@ export function ecranComposer() {
 }
 
 // Suggestions de la séance personnalisée : exercices fréquents récemment, pas faits ces 2 derniers jours.
-export function suggestionsPerso() {
+function suggestionsPerso() {
   const compte = new Map();
   for (const s of d.historique) {
     if (joursDepuis(s.date) > 45) continue;
@@ -64,7 +72,8 @@ export function suggestionsPerso() {
   return ids.slice(0, 4);
 }
 
-export function lignePerso(id) {
+/** Ligne à cocher d'un exercice. */
+function lignePerso(id) {
   const def = exo(id);
   const pos = ui.perso.sel.indexOf(id);
   const on = pos >= 0;
@@ -76,7 +85,8 @@ export function lignePerso(id) {
   </button>`;
 }
 
-export function listePerso() {
+/** Liste filtrée par la recherche et le groupe choisi. */
+function listePerso() {
   const p = ui.perso;
   const q = normaliser(p.q);
   const garde = (e) => !d.exclus.includes(e.id) && (p.filtre === 'tous' || e.famille === p.filtre)
@@ -93,6 +103,7 @@ export function listePerso() {
   return html || '<div class="carte petit">Aucun exercice ne correspond.</div>';
 }
 
+/** Écran « Séance personnalisée ». */
 export function ecranPerso() {
   const p = ui.perso;
   const filtres = FAMILLES.map(([id, t]) => `<button class="puce ${p.filtre === id ? 'on' : ''} ${id === 'haltero' ? 'h' : ''}" data-action="filtre" data-id="${id}" aria-pressed="${p.filtre === id}">${t}</button>`).join('');

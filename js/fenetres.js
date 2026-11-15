@@ -1,3 +1,11 @@
+// =====================================================================
+// Fenêtres qui s'ouvrent par-dessus l'écran (feuilles du bas)
+// ---------------------------------------------------------------------
+// Une seule fonction, modalHtml(), qui dessine la fenêtre décrite par ui.modal.
+// ui.modal.type dit laquelle : choix d'exercice, options de charge, record,
+// confirmation, détail d'une séance, plan Hyrox…
+// =====================================================================
+
 import { ICONES, estHaltero, infoExo, nomExo } from './commun.js';
 import { nomItem } from './ecrans/hyrox.js';
 import { resumeSeries } from './ecrans/seance.js';
@@ -8,7 +16,8 @@ import { genererPlan } from './metier/hyrox.js';
 import { aujourdhui, dateCourte, dateLongue, esc, mmss, nb } from './outils.js';
 import { chargeSerie, exoCourant } from './seance-muscu.js';
 
-export function ligneChoix(id, actuel, indexCase) {
+/** Ligne d'un exercice dans la fenêtre de choix. */
+function ligneChoix(id, actuel, indexCase) {
   const def = exo(id);
   return `<button class="choix ${id === actuel ? 'selection' : ''}" data-action="choisir" data-id="${id}" data-i="${indexCase}" style="min-height:58px">
     <span class="mini-dessin">${illustration(def.dessin, def.nom, 40)}</span>
@@ -17,6 +26,7 @@ export function ligneChoix(id, actuel, indexCase) {
   </button>`;
 }
 
+/** HTML de la fenêtre ouverte (chaîne vide s'il n'y en a pas). */
 export function modalHtml() {
   const m = ui.modal;
   if (!m) return '';

@@ -1,3 +1,16 @@
+// =====================================================================
+// Point d'entrée de l'appli
+// ---------------------------------------------------------------------
+// Ce fichier fait le lien entre tout le reste :
+//   1. rendre()  : choisit l'écran à afficher et redessine la page ;
+//   2. les écouteurs : un clic sur un bouton [data-action="x"] lance actions.x ;
+//   3. le démarrage : reprise d'une séance en cours, mise à jour hors ligne.
+//
+// Principe d'affichage : chaque écran est une fonction qui renvoie du HTML.
+// Après chaque action, on redessine tout l'écran à partir des données (d)
+// et de l'état d'affichage (ui). Simple, et suffisant pour une appli de cette taille.
+// =====================================================================
+
 import { ecranAccueil } from './ecrans/accueil.js';
 import { actions as actionsComposition, ecranComposer, ecranPerso, majPerso } from './ecrans/composition.js';
 import { actions as actionsHyroxSeance, ecranHyroxFin, ecranHyroxSeance, ticHyrox } from './ecrans/hyrox-seance.js';
@@ -19,6 +32,7 @@ import { garderEcranAllume } from './seance-muscu.js';
 
 const $app = document.getElementById('app');
 
+/** Redessine la page : l'écran courant, puis la fenêtre ouverte, le message et le flash éventuels. */
 function rendre() {
   let html;
   if (ui.ecran === 'exercice' && d.enCours) html = ecranExercice();

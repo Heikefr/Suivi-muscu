@@ -1,3 +1,10 @@
+// =====================================================================
+// Onglet Hyrox : profil, plan et choix d'une séance
+// ---------------------------------------------------------------------
+// Sans profil : présentation. Avec une compétition à venir : le plan de la semaine.
+// Sinon : le mode libre. La séance elle-même est dans hyrox-seance.js.
+// =====================================================================
+
 import { ICONES, nav } from '../commun.js';
 import { prochaineSeance } from '../composition.js';
 import { d, enregistrer, toast, ui } from '../etat.js';
@@ -9,26 +16,28 @@ import {
 } from '../metier/hyrox.js';
 import { aujourdhui, dateCourte, dateLongue, esc, ilYa, mmss } from '../outils.js';
 
-export const NOMS_PHASE = { Base: 'Base', Construction: 'Construction', Pic: 'Pic', 'Compétition': 'Compétition' };
-
+/** Nom d'un élément du plan (séance Hyrox, muscu ou jour J). */
 export function nomItem(it) {
   if (it.type === 'hyrox') return seanceHyrox(it.id).nom;
   if (it.type === 'muscu') return 'Muscu';
   return 'Jour J';
 }
 
-export function dureeSeanceHyrox(s) {
+/** Durée indicative d'une séance. */
+function dureeSeanceHyrox(s) {
   return `${s.duree} min`;
 }
 
-export function resumeEtapes(s) {
+/** Résumé en une ligne du bloc principal d'une séance. */
+function resumeEtapes(s) {
   const p = s.blocs(d.hyroxAjust[s.id] || 0).find((b) => b.nom !== 'Échauffement' && b.nom !== 'Retour au calme') || s.blocs(0)[0];
   const etapes = p.etapes.filter((e) => !e.repos).map((e) => e.texte);
   const liste = etapes.length > 4 ? `${etapes.slice(0, 4).join(', ')}…` : etapes.join(', ');
   return p.tours > 1 ? `${p.tours} tours : ${liste}` : liste;
 }
 
-export function ecranHyroxIntro() {
+/** Présentation, tant qu'aucun profil n'existe. */
+function ecranHyroxIntro() {
   return `<main class="ecran avec-nav theme-hyrox">
     <div class="pile u-ecart-6"><div class="sur-titre">Hyrox</div><h1>Prépare ton Hyrox</h1></div>
     <div class="carte pile u-ecart-8 u-t-15 u-interligne-1-45">
@@ -40,7 +49,8 @@ export function ecranHyroxIntro() {
   </main>${nav('hyrox')}`;
 }
 
-export function carteReprise() {
+/** Carte « Séance en cours », s'il y en a une. */
+function carteReprise() {
   if (!d.enCoursHyrox) return '';
   return `<div class="conseillee">
     <div class="label">Séance en cours</div>
@@ -49,7 +59,8 @@ export function carteReprise() {
   </div>`;
 }
 
-export function faitesSemaine(w) {
+/** Ce qui a déjà été fait dans la semaine `w` du plan. */
+function faitesSemaine(w) {
   const dans = d.historique.filter((s) => s.date >= w.debut && s.date <= w.fin && !s.importee);
   const hy = {};
   let mu = 0;
@@ -62,6 +73,7 @@ export function faitesSemaine(w) {
   return { hy, mu };
 }
 
+/** Écran principal de l'onglet : le plan de la semaine. */
 export function ecranHyrox() {
   const p = d.hyroxProfil;
   if (!p) return ecranHyroxIntro();
@@ -106,7 +118,7 @@ export function ecranHyrox() {
     </div>
     ${carteReprise()}
     <div class="carte pile u-ecart-10">
-      <div class="ligne"><div class="u-flex-1 u-gras-600">Semaine 1 sur ${plan.length}</div><div class="label u-c-accent u-t-12">${NOMS_PHASE[w.phase]}</div></div>
+      <div class="ligne"><div class="u-flex-1 u-gras-600">Semaine 1 sur ${plan.length}</div><div class="label u-c-accent u-t-12">${w.phase}</div></div>
       <div class="segments" style="grid-template-columns:repeat(${plan.length},minmax(0,1fr))">${segments}</div>
       <div class="petit">${suite.length ? `Ensuite : ${suite.join(', puis ')}` : 'Dernière ligne droite'} · <button class="btn-lien u-hmin-0 u-pad-0 u-t-13 u-c-accent" data-action="voir-plan">Voir tout le plan</button></div>
     </div>
@@ -116,6 +128,7 @@ export function ecranHyrox() {
   </main>${nav('hyrox')}`;
 }
 
+/** Liste des séances libres ; `avecRetour` = ouverte depuis le plan. */
 export function ecranHyroxLibre(avecRetour) {
   const p = d.hyroxProfil;
   const sug = suggestionLibre(d.historique);
@@ -149,6 +162,7 @@ export function ecranHyroxLibre(avecRetour) {
   </main>${avecRetour ? '' : nav('hyrox')}`;
 }
 
+/** Ligne d'une étape (schéma, allure, charge) ; `etat` : faite, avenir… */
 export function ligneEtape(e, reperes, etat = '', duree = null) {
   const al = allureTexte(e, reperes);
   const allure = al && /\d/.test(al) ? `à ${al}` : al;
@@ -160,6 +174,7 @@ export function ligneEtape(e, reperes, etat = '', duree = null) {
   </div>`;
 }
 
+/** Aperçu d'une séance avant de la démarrer. */
 export function ecranHyroxApercu() {
   const s = seanceHyrox(ui.hyroxApercu);
   const blocs = s.blocs(d.hyroxAjust[s.id] || 0);
@@ -181,6 +196,7 @@ export function ecranHyroxApercu() {
   </main>`;
 }
 
+/** Formulaire du profil Hyrox (le brouillon est dans ui.hp). */
 export function ecranHyroxProfil() {
   const f = ui.hp;
   const auj = aujourdhui();

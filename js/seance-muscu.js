@@ -1,11 +1,20 @@
+// =====================================================================
+// Déroulé d'une séance de musculation
+// ---------------------------------------------------------------------
+// Démarrer, valider une série, lancer la récupération, passer à l'exercice suivant,
+// terminer. La séance en cours vit dans d.enCours : elle survit donc à une
+// fermeture de l'appli.
+// =====================================================================
+
 import { estHaltero, nomExo } from './commun.js';
 import { d, enregistrer, rendre, ui } from './etat.js';
 import { cibleFinale, exo, seance } from './metier/donnees.js';
 import { bilanHaltero, planHaltero, suggestion } from './metier/progression.js';
 import { aujourdhui, nb } from './outils.js';
 
-export let verrouEcran = null;
+let verrouEcran = null;
 
+/** Empêche l'écran de s'éteindre pendant la séance (si le téléphone le permet). */
 export async function garderEcranAllume() {
   try {
     if ('wakeLock' in navigator && (d.enCours || d.enCoursHyrox) && !verrouEcran) {
@@ -15,11 +24,13 @@ export async function garderEcranAllume() {
   } catch (e) { /* refusé : pas grave */ }
 }
 
+/** Rend la main au téléphone pour la mise en veille. */
 export function libererEcran() {
   try { verrouEcran?.release(); } catch (e) { /* déjà libéré */ }
   verrouEcran = null;
 }
 
+/** Construit un exercice de séance : objectif, charge conseillée et raison affichée. */
 export function preparerExo(item) {
   const def = exo(item.exo);
   const cible = cibleFinale(def, item.cible);
@@ -38,6 +49,7 @@ export function preparerExo(item) {
   return { ...base, conseillee: sug.charge, charge: sug.charge, raison: sug.raison };
 }
 
+/** Démarre une séance avec la liste d'exercices choisie. */
 export function demarrer(seanceId, nom, items) {
   if (!items.length) return;
   d.enCours = {
@@ -52,15 +64,18 @@ export function demarrer(seanceId, nom, items) {
   window.scrollTo(0, 0);
 }
 
+/** L'exercice affiché en ce moment. */
 export function exoCourant() {
   return d.enCours.exercices[d.enCours.index];
 }
 
+/** Charge prévue pour la série n° i (en haltéro, chaque série a la sienne). */
 export function chargeSerie(e, i) {
   if (e.plan) return e.plan[i] ?? e.charge;
   return e.charge;
 }
 
+/** Index du prochain exercice qui a encore des séries à faire, ou -1 si tout est fait. */
 export function prochainIndex(depuis) {
   const ex = d.enCours.exercices;
   for (let k = 1; k <= ex.length; k++) {
@@ -70,6 +85,7 @@ export function prochainIndex(depuis) {
   return -1;
 }
 
+/** Enregistre la série faite, puis lance la récupération ou passe à la suite. */
 export function validerSerie(reps) {
   const e = exoCourant();
   const def = exo(e.exo);
@@ -95,6 +111,7 @@ export function validerSerie(reps) {
   window.scrollTo(0, 0);
 }
 
+/** Fin de la récupération : retour à l'écran de l'exercice. */
 export function finRecup() {
   d.enCours.recup = null;
   enregistrer();
@@ -103,6 +120,7 @@ export function finRecup() {
   window.scrollTo(0, 0);
 }
 
+/** Clôt la séance : la range dans l'historique et met à jour les réglages d'haltéro. */
 export function terminer() {
   const ec = d.enCours;
   const faits = ec.exercices.filter((e) => e.series.length);
@@ -139,6 +157,7 @@ export function terminer() {
   window.scrollTo(0, 0);
 }
 
+/** Haltéro : recalcule les charges des séries restantes quand le record change. */
 export function recalculerPlan(e, def) {
   const record = d.records[def.id] || null;
   const plan = planHaltero(def, record, d.haltero[def.id] || 0);

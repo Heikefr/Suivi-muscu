@@ -1,3 +1,9 @@
+// =====================================================================
+// Onglets Progression et Exercices
+// ---------------------------------------------------------------------
+// Courbe et historique par exercice, liste des séances, catalogue et fiche d'un exercice.
+// =====================================================================
+
 import { ICONES, cibleTexte, estHaltero, nav, nomExo } from '../commun.js';
 import { resumeSeries } from './seance.js';
 import { d, enregistrer, toast, ui } from '../etat.js';
@@ -6,13 +12,15 @@ import { EXERCICES, GROUPES, SEANCES, exo } from '../metier/donnees.js';
 import { chargeDe, historiqueExo, seancesMemeCharge, tendance } from '../metier/progression.js';
 import { dateCourte, dateLongue, esc, mmss, nb } from '../outils.js';
 
-export function exosAvecHistorique() {
+/** Exercices ayant au moins une séance enregistrée, les plus récents d'abord. */
+function exosAvecHistorique() {
   const ids = new Map();
   for (const s of d.historique) for (const e of s.exercices) ids.set(e.exo, { nom: e.nom, date: s.date > (ids.get(e.exo)?.date || '') ? s.date : ids.get(e.exo).date });
   return [...ids.entries()].map(([id, v]) => ({ id, nom: nomExo(id, v.nom), date: v.date }))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.nom.localeCompare(b.nom)));
 }
 
+/** Onglet Progression. */
 export function ecranProgression() {
   const liste = exosAvecHistorique();
   if (!liste.length) {
@@ -73,6 +81,7 @@ export function ecranProgression() {
   </main>${nav('progression')}`;
 }
 
+/** Onglet Exercices : le catalogue par groupe. */
 export function ecranExercices() {
   const groupes = GROUPES.map((g) => {
     const items = EXERCICES.filter((e) => e.groupe === g).map((e) => `
@@ -89,6 +98,7 @@ export function ecranExercices() {
   </main>${nav('exercices')}`;
 }
 
+/** Fiche d'un exercice : schéma, conseil, historique. */
 export function ecranDetail() {
   const def = exo(ui.exoDetail);
   const passe = historiqueExo(d.historique, def.id).slice(-6).reverse();

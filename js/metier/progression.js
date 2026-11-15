@@ -20,6 +20,7 @@ export function chargeDe(series) {
   return series.reduce((m, s) => Math.max(m, Number(s.charge) || 0), 0);
 }
 
+/** Arrondit à 1 décimale. */
 function arrondir(x) {
   return Math.round(x * 10) / 10;
 }
@@ -78,10 +79,12 @@ export function tendance(passe) {
 
 // ---------- Suggestion intelligente d'exercice pour une case de séance ----------
 
+/** Copie de l'historique, de la séance la plus récente à la plus ancienne. */
 function trierRecentes(historique) {
   return [...historique].sort((a, b) => (a.date === b.date ? (b.debut || 0) - (a.debut || 0) : a.date < b.date ? 1 : -1));
 }
 
+/** Vrai si l'exercice `id` a au moins une série dans la séance `s`. */
 function fait(s, id) {
   return s.exercices.some((e) => e.exo === id && e.series.length);
 }
@@ -138,7 +141,8 @@ export function choisirPourCase(cas, historique, exclus, seanceId, nomDe = (id) 
 
 // ---------- Haltérophilie : charges en % du record ----------
 
-export function arrondiBarre(kg) {
+/** Arrondit une charge de barre au kilo entier (jamais négative). */
+function arrondiBarre(kg) {
   return Math.max(0, Math.round(kg));
 }
 

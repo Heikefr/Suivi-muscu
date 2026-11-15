@@ -29,11 +29,13 @@ export function lireCsv(texte) {
   return lignes.filter((l) => l.some((c) => c.trim() !== ''));
 }
 
+/** « 42,5 » → 42.5 ; texte illisible → null. */
 function nombre(v) {
   const n = parseFloat(String(v || '').replace(/\s/g, '').replace(',', '.'));
   return Number.isFinite(n) ? n : null;
 }
 
+/** « 15/11/2026 » ou « 2026-11-15 » → « 2026-11-15 ». */
 function dateIso(v) {
   const m = String(v || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
@@ -41,7 +43,8 @@ function dateIso(v) {
   return iso ? iso[0] : null;
 }
 
-export function typeSeance(texte) {
+/** Reconnaît Push / Pull / Jambes dans le nom d'une séance de l'ancien tableur. */
+function typeSeance(texte) {
   const n = normaliser(texte);
   if (n.includes('push')) return 'push';
   if (n.includes('pull')) return 'pull';
@@ -49,6 +52,7 @@ export function typeSeance(texte) {
   return 'libre';
 }
 
+/** Note d'effort de l'ancien tableur (RPE) → facile / correct / dur. */
 function ressentiDepuisRpe(rpe) {
   if (rpe == null) return null;
   if (rpe >= 8.5) return 'dur';
@@ -56,6 +60,7 @@ function ressentiDepuisRpe(rpe) {
   return 'correct';
 }
 
+/** Texte → identifiant simple : « Séance A » → « seance-a ». */
 function slug(texte) {
   return normaliser(texte).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
