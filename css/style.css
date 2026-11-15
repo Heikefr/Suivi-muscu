@@ -9,6 +9,7 @@
   --accent: #E8FF47;
   --accent-doux: #F3FF9A;
   --orange: #FFB86B;
+  --muscle: #FF3B47;
   --titre: 'Space Grotesk', Inter, system-ui, sans-serif;
   color-scheme: dark;
 }
@@ -379,3 +380,6 @@ button.conseillee { width: 100%; font-family: inherit; }
 }
 .repere .al { width: 92px; text-align: right; font-size: 12px; }
 .champ-date { background: transparent; border: none; font-size: 17px; font-weight: 600; padding: 0; color: var(--texte); color-scheme: dark; }
+
+/* Schémas : le fond sert à détourer le bras qui passe devant le buste. */
+.dessin, .mini-dessin { --fond-dessin: var(--carte2); }
