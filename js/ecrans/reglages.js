@@ -8,7 +8,7 @@ import { ICONES, nomExo } from '../commun.js';
 import { VERSION, d, enregistrer, remplacerDonnees, rendre, toast, ui } from '../etat.js';
 import { fusionner, importerCsv } from '../metier/import.js';
 import { valider, vide } from '../metier/stockage.js';
-import { aujourdhui, esc } from '../outils.js';
+import { aujourdhui, dateLongue, esc } from '../outils.js';
 
 export function ecranReglages() {
   const nbS = d.historique.length;
@@ -26,6 +26,11 @@ export function ecranReglages() {
         <input type="file" class="cache" data-action="importer" accept=".csv,.json,text/csv,application/json,text/plain">
       </label>
       <div class="petit">Accepte une sauvegarde de l'appli (.json) ou ton ancien suivi Google Sheet exporté en CSV (onglet musculation).</div>
+    </div>
+    <div class="carte pile">
+      <div class="u-gras-600">Rappel de sauvegarde</div>
+      <div class="puces">${[[7, 'Chaque semaine'], [30, 'Chaque mois'], [0, 'Jamais']].map(([j, t]) => `<button class="puce ${d.sauvegarde.rappel === j ? 'on' : ''}" data-action="rappel" data-j="${j}" aria-pressed="${d.sauvegarde.rappel === j}">${t}</button>`).join('')}</div>
+      <div class="petit">Dernière sauvegarde : ${d.sauvegarde.derniere ? dateLongue(d.sauvegarde.derniere) : 'jamais'}. Le rappel s'affiche sur l'accueil et disparaît dès que tu sauvegardes.</div>
     </div>
     ${d.exclus.length ? `<div class="carte pile">
       <div class="u-gras-600">Exercices exclus</div>
@@ -83,13 +88,17 @@ export const actions = {
     toast('Données effacées');
     return false;
   },
+  rappel(el) { d.sauvegarde.rappel = Number(el.dataset.j); enregistrer(); },
   async exporter() {
+    // La sauvegarde est notée comme faite seulement si elle aboutit (pas si le partage est annulé).
+    const noter = () => { d.sauvegarde.derniere = aujourdhui(); enregistrer(); rendre(); toast('Sauvegarde faite'); };
     const texte = JSON.stringify({ ...d, exporte: new Date().toISOString(), appli: 'suivi-muscu', versionAppli: VERSION }, null, 1);
     const nom = `suivi-muscu-${aujourdhui()}.json`;
     try {
       const fichier = new File([texte], nom, { type: 'application/json' });
       if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
         await navigator.share({ files: [fichier], title: nom });
+        noter();
         return false;
       }
     } catch (e) {
@@ -103,6 +112,7 @@ export const actions = {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
+    noter();
     return false;
   },
 };

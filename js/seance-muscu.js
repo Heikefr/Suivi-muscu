@@ -6,6 +6,7 @@
 // fermeture de l'appli.
 // =====================================================================
 
+import { nouveauxRecords } from './metier/bilan.js';
 import { estHaltero, nomExo } from './commun.js';
 import { d, enregistrer, rendre, ui } from './etat.js';
 import { cibleFinale, exo, seance } from './metier/donnees.js';
@@ -54,6 +55,8 @@ export function demarrer(seanceId, nom, items) {
   if (!items.length) return;
   d.enCours = {
     seance: seanceId, nom, debut: Date.now(), index: 0, recup: null,
+    // Échauffement proposé avant la toute première série : nombre de séries de chauffe faites.
+    chauffe: { faites: 0, finie: false },
     exercices: items.map(preparerExo),
   };
   enregistrer();
@@ -97,6 +100,7 @@ export function validerSerie(reps) {
     return;
   }
   e.series.push({ reps: reps ?? e.reps, charge: def.poidsDuCorps ? 0 : charge, ressenti: null });
+  if (d.enCours.chauffe) d.enCours.chauffe.finie = true; // une vraie série est faite : plus d'échauffement
   const exoIndex = d.enCours.index;
   const serieIndex = e.series.length - 1;
   if (e.series.length >= e.cible.series) {
@@ -127,6 +131,7 @@ export function terminer() {
   d.enCours = null;
   libererEcran();
   ui.finInfos = [];
+  ui.finRecords = [];
   if (!faits.length) {
     enregistrer();
     ui.ecran = 'accueil';
@@ -149,6 +154,8 @@ export function terminer() {
     seance: ec.seance, nom: ec.nom || seance(ec.seance)?.nom || ec.seance,
     exercices: faits.map((e) => ({ exo: e.exo, nom: nomExo(e.exo), series: e.series })),
   };
+  // Records battus (hors haltérophilie, qui a déjà son propre suivi du record).
+  ui.finRecords = nouveauxRecords(d.historique, s).filter((r) => !estHaltero(exo(r.exo)));
   d.historique.push(s);
   enregistrer();
   ui.ecran = 'fin';

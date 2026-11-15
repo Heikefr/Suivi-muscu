@@ -9,6 +9,7 @@ import { ecranAccueil } from './accueil.js';
 import { d, enregistrer, rendre, toast, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
 import { exo, seance } from '../metier/donnees.js';
+import { echauffement } from '../metier/bilan.js';
 import { chargeDe } from '../metier/progression.js';
 import { dateLongue, esc, mmss, nb } from '../outils.js';
 import {
@@ -27,6 +28,41 @@ function enteteSeance(theme) {
         <div class="barres" style="grid-template-columns:repeat(${ec.exercices.length},minmax(0,1fr))">${barres}</div>
       </div>
     </div>`;
+}
+
+/** Texte d'une série record : « 62,5 kg × 8 » ou « 12 reps » au poids du corps. */
+export function texteRecord(r, def) {
+  return r.charge > 0 ? `${nb(r.charge)} kg × ${r.reps}` : repsTexte(r.reps, def || {});
+}
+
+/** Ligne « Mes réglages » d'un exercice (hauteur du siège, prise…), ou le lien pour en ajouter. */
+function blocNote(def) {
+  const note = d.notes[def.id];
+  if (!note) return `<button class="btn-lien lien-note" data-action="note" data-id="${def.id}">+ Ajouter mes réglages (siège, prise…)</button>`;
+  return `<button class="carte note" data-action="note" data-id="${def.id}">
+    <span class="pile u-ecart-2 u-flex-1"><span class="petit">Mes réglages</span><span class="texte-note">${esc(note)}</span></span>
+    <span class="petit u-c-accent">Modifier</span>
+  </button>`;
+}
+
+/**
+ * Carte d'échauffement : seulement avant la toute première série de la séance.
+ * Les séries de chauffe ne sont pas enregistrées dans l'historique.
+ */
+function blocChauffe(e, def) {
+  const ec = d.enCours;
+  if (!ec.chauffe || ec.chauffe.finie || ec.index !== 0 || e.series.length) return '';
+  const series = echauffement(e.charge, def);
+  const n = ec.chauffe.faites;
+  if (!series.length || n >= series.length) return '';
+  return `<div class="carte chauffe pile u-ecart-10">
+    <div class="ligne"><div class="u-flex-1 u-gras-600">Échauffement <span class="petit">· avant ${nb(e.charge)} kg</span></div>
+      <button class="btn-lien passer" data-action="chauffe-passer">Passer</button></div>
+    <div class="paliers" style="grid-template-columns:repeat(${series.length},minmax(0,1fr))">
+      ${series.map((x, i) => `<div class="${i < n ? 'fait' : i === n ? 'encours' : ''}"><strong>${i < n ? '✓ ' : ''}${nb(x.charge)} kg</strong><span class="petit">${x.reps} reps</span></div>`).join('')}
+    </div>
+    <button class="btn-secondaire" data-action="chauffe-ok">Chauffe ${n + 1} faite</button>
+  </div>`;
 }
 
 /** Écran d'un exercice de musculation (délègue à ecranHaltero pour l'haltérophilie). */
@@ -68,6 +104,8 @@ export function ecranExercice() {
         <div class="petit u-t-12">${esc(def.muscles)}</div>
       </div>
     </div>
+    ${blocNote(def)}
+    ${blocChauffe(e, def)}
     <div class="grille2">
       <button class="case" data-action="options" ${def.poidsDuCorps ? 'disabled style="opacity:1"' : ''}>
         <span class="petit">Poids conseillé</span>
@@ -109,6 +147,7 @@ function ecranHaltero(e, def) {
   return `<main class="ecran theme-haltero">
     ${enteteSeance()}
     <h1>${esc(def.nom)}</h1>
+    ${blocNote(def)}
     <div class="carte pile u-ecart-12 u-pad-16 u-rayon-18">
       <div class="ligne u-items-flex-end">
         <div class="pile u-flex-1 u-ecart-4">
@@ -193,7 +232,7 @@ export function resumeSeries(series, def) {
   if (estHaltero(def)) return series.map((s) => `${nb(s.charge)} kg×${s.reps}`).join(' · ');
   const reps = series.map((s) => s.reps).join(' / ');
   if (def?.poidsDuCorps || chargeDe(series) === 0) return `${series.length} × ${reps} reps`;
-  return `${series.length} séries · ${reps} reps · ${nb(chargeDe(series))} kg`;
+  return `${series.length} série${series.length > 1 ? 's' : ''} · ${reps} reps · ${nb(chargeDe(series))} kg`;
 }
 
 /** Écran de fin de séance : résumé et ressenti global. */
@@ -212,6 +251,10 @@ export function ecranFin() {
       <h1>Séance terminée</h1>
     </div>
     ${(ui.finInfos || []).map((t) => `<div class="bandeau">${esc(t)}</div>`).join('')}
+    ${ui.finRecords?.length ? `<div class="conseillee">
+      <div class="label">${ui.finRecords.length > 1 ? `${ui.finRecords.length} nouveaux records` : 'Nouveau record'}</div>
+      ${ui.finRecords.map((r) => `<div class="u-t-15 u-gras-600">${esc(nomExo(r.exo, r.nom))} : ${texteRecord(r, exo(r.exo))} <span class="u-gras-500">(avant ${texteRecord(r.avant, exo(r.exo))})</span></div>`).join('')}
+    </div>` : ''}
     <div class="grille3">
       <div class="carte case"><span class="petit">Durée</span><span class="chiffre u-t-24">${minutes} min</span></div>
       <div class="carte case"><span class="petit">Séries</span><span class="chiffre u-t-24">${nbSeries}</span></div>
@@ -264,6 +307,17 @@ export function tic() {
 
 /** Actions des boutons de ce fichier (attribut data-action dans le HTML). */
 export const actions = {
+  // --- Réglages personnels d'un exercice ---
+  note(el) { ui.modal = { type: 'note', exo: el.dataset.id }; },
+  'note-ok'() {
+    const texte = (document.getElementById('note-texte')?.value || '').trim();
+    if (texte) d.notes[ui.modal.exo] = texte; else delete d.notes[ui.modal.exo];
+    enregistrer();
+    ui.modal = null;
+  },
+  // --- Échauffement ---
+  'chauffe-ok'() { d.enCours.chauffe.faites++; enregistrer(); },
+  'chauffe-passer'() { d.enCours.chauffe.finie = true; enregistrer(); },
   reprendre() {
     ui.ecran = d.enCours.recup ? 'recup' : 'exercice';
     garderEcranAllume();

@@ -105,6 +105,14 @@ export function modalHtml() {
       <div class="ligne u-ecart-8">${[-10, -5, 5, 10].map((x) => `<button class="btn-secondaire" data-action="record-pas" data-id="${def.id}" data-d="${x}">${x > 0 ? '+' : '−'}${Math.abs(x)}</button>`).join('')}</div>
       ${r ? `<button class="btn-lien" data-action="record-inconnu" data-id="${def.id}">Je ne connais pas mon record</button>` : ''}
       <button class="btn-principal" data-action="fermer">OK</button>`;
+  } else if (m.type === 'note') {
+    contenu = `<h2>Mes réglages</h2>
+      <div class="petit">${esc(nomExo(m.exo))}</div>
+      <label class="pile u-ecart-6"><span class="petit">Hauteur du siège, cran, prise… tout ce que tu veux retrouver la prochaine fois.</span>
+        <textarea id="note-texte" class="champ zone-texte" maxlength="140" rows="3" placeholder="Ex. siège cran 4, prise large">${esc(d.notes[m.exo] || '')}</textarea>
+      </label>
+      <button class="btn-principal" data-action="note-ok">Enregistrer</button>
+      <button class="btn-secondaire" data-action="fermer">Annuler</button>`;
   } else if (m.type === 'enregistrer') {
     contenu = `<h2>Enregistrer la séance</h2>
       <label class="pile u-ecart-6"><span class="petit">Nom de la séance</span>

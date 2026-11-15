@@ -4,16 +4,19 @@
 // Séance conseillée, Push / Pull / Jambes, séance personnalisée et séances enregistrées.
 // =====================================================================
 
+import { rappelSauvegarde } from '../metier/bilan.js';
 import { ICONES, nav } from '../commun.js';
 import { derniereFois, prochaineSeance } from '../composition.js';
 import { d } from '../etat.js';
 import { SEANCES, seance } from '../metier/donnees.js';
-import { debutSemaine, esc } from '../outils.js';
+import { aujourdhui, debutSemaine, esc } from '../outils.js';
 
 export function ecranAccueil() {
   const deb = debutSemaine();
   const faites = d.historique.filter((s) => s.date >= deb && !s.importee).length;
   const prochaine = seance(prochaineSeance());
+  // Rappel de sauvegarde : jamais pendant une séance, pour ne pas gêner.
+  const rappel = d.enCours ? null : rappelSauvegarde(d.sauvegarde, d.historique, aujourdhui());
   const standalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
 
   let haut;
@@ -50,6 +53,10 @@ export function ecranAccueil() {
       <button class="btn-icone" data-action="ecran" data-id="reglages" aria-label="Réglages">${ICONES.reglages}</button>
     </div>
     ${standalone ? '' : `<div class="bandeau"><strong>Installe l'appli :</strong> dans Safari, touche Partager puis « Sur l'écran d'accueil ». C'est indispensable pour que tes données restent bien sur le téléphone.</div>`}
+    ${rappel ? `<div class="bandeau rappel-sauvegarde">
+      <span><strong>${rappel.jours == null ? 'Tu n\'as pas encore fait de sauvegarde.' : `Dernière sauvegarde il y a ${rappel.jours} jours.`}</strong><br>Mets tes données à l'abri dans Fichiers ou iCloud.</span>
+      <button class="btn-secondaire" data-action="exporter">Sauvegarder</button>
+    </div>` : ''}
     ${haut}
     <div class="pile">
       ${autres}

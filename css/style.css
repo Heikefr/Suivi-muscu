@@ -381,6 +381,36 @@ button.conseillee { width: 100%; font-family: inherit; }
 /* Schémas : le fond sert à détourer le bras qui passe devant le buste. */
 .dessin, .mini-dessin { --fond-dessin: var(--carte2); }
 
+/* ---------- 0.5 : réglages, échauffement, records, carte des muscles, sauvegarde ---------- */
+.note { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; min-height: 52px; }
+.texte-note { font-size: 15px; font-weight: 600; line-height: 1.35; white-space: pre-wrap; }
+.lien-note { align-self: flex-start; min-height: 32px; padding: 0; color: var(--doux); }
+.zone-texte { height: auto; padding: 12px 14px; line-height: 1.4; resize: none; font-family: inherit; }
+.chauffe { background: transparent; border: 1px dashed var(--gris); }
+.chauffe .passer { min-height: 0; padding: 0; color: var(--doux); }
+.paliers { display: grid; gap: 8px; text-align: center; }
+.paliers > div { background: var(--carte2); border-radius: 12px; padding: 10px 4px; border: 2px solid transparent; display: flex; flex-direction: column; gap: 2px; }
+.paliers strong { font-size: 17px; }
+.paliers .fait { opacity: .5; }
+.paliers .encours { border-color: var(--accent); }
+.carte-muscles { display: flex; justify-content: space-around; }
+.legende-muscles { display: flex; justify-content: center; gap: 16px; }
+.legende-muscles i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--muscle); margin-right: 6px; }
+.n1 { opacity: .38; } .n2 { opacity: .68; } .n3 { opacity: 1; }
+.ligne-muscle { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.ligne-muscle .nom { width: 92px; }
+.ligne-muscle .jauge { flex: 1; height: 8px; border-radius: 4px; background: var(--bord); overflow: hidden; }
+.ligne-muscle .jauge span { display: block; height: 8px; border-radius: 4px; background: var(--muscle); }
+.ligne-muscle .petit { width: 62px; text-align: right; }
+.liste-records { padding: 4px 14px; }
+.ligne-record { display: flex; align-items: center; gap: 10px; min-height: 54px; border-bottom: 1px solid var(--bord); }
+.ligne-record:last-child { border-bottom: none; }
+.ligne-record .nom { font-size: 15px; font-weight: 600; }
+.ligne-record .valeur { font-family: var(--titre); font-size: 18px; font-weight: 700; white-space: nowrap; }
+.rappel-sauvegarde { display: flex; align-items: center; gap: 10px; }
+.rappel-sauvegarde > span { flex: 1; }
+.rappel-sauvegarde button { width: auto; height: 44px; padding: 0 14px; border-color: var(--accent); color: var(--accent); }
+
 /* ---------- Classes utilitaires ----------
    Petits réglages ponctuels (espacement, taille de texte…) utilisés dans les écrans.
    Nom = u-<réglage>-<valeur>. Le !important garantit qu'elles passent après les règles du composant. */

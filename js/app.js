@@ -18,7 +18,7 @@ import {
   actions as actionsHyrox, ecranHyrox, ecranHyroxApercu, ecranHyroxLibre, ecranHyroxProfil,
 } from './ecrans/hyrox.js';
 import {
-  actions as actionsProgression, ecranDetail, ecranExercices, ecranProgression,
+  actions as actionsProgression, ecranDetail, ecranExercices, ecranProgression, ecranRecords,
 } from './ecrans/progression.js';
 import { actions as actionsReglages, ecranReglages, importerFichier } from './ecrans/reglages.js';
 import { actions as actionsSeance, ecranExercice, ecranFin, ecranRecup, tic } from './ecrans/seance.js';
@@ -44,6 +44,7 @@ function rendre() {
   else if (ui.ecran === 'exercices') html = ecranExercices();
   else if (ui.ecran === 'detail' && exo(ui.exoDetail)) html = ecranDetail();
   else if (ui.ecran === 'reglages') html = ecranReglages();
+  else if (ui.ecran === 'records') html = ecranRecords();
   else if (ui.ecran === 'hyrox-seance' && d.enCoursHyrox) html = ecranHyroxSeance();
   else if (ui.ecran === 'hyrox-fin') html = ecranHyroxFin();
   else if (ui.ecran === 'hyrox-profil') html = ecranHyroxProfil();

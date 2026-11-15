@@ -36,9 +36,10 @@ Pas d'outil de construction : du HTML, du CSS et du JavaScript en modules, lus t
 | `js/outils.js`, `js/commun.js` | Outils (dates, nombres) et éléments d'interface partagés |
 | `js/composition.js`, `js/seance-muscu.js` | Composer une séance, dérouler une séance de musculation |
 | `js/fenetres.js` | Fenêtres qui s'ouvrent par-dessus l'écran |
+| `js/carte-muscles.js` | Silhouettes face et dos de la carte des muscles travaillés |
 | `js/illustrations.js` | Schémas des exercices, dessinés par du code (muscle travaillé en rouge) |
 | `js/ecrans/` | Un fichier par écran ou groupe d'écrans, avec les actions de ses boutons |
-| `js/metier/` | Calculs sans affichage, couverts par les tests : catalogue, progression, Hyrox, import, stockage |
+| `js/metier/` | Calculs sans affichage, couverts par les tests : catalogue, progression, bilans (muscles, records, échauffement, sauvegarde), Hyrox, import, stockage |
 | `css/style.css` | Thèmes, composants, puis classes utilitaires (`u-…`) |
 | `tests/*.test.js` | Tests des calculs : `npm test` |
 | `tests/e2e/` | Parcours complet dans un iPhone simulé, pour comparer deux versions |

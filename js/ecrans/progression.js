@@ -10,7 +10,10 @@ import { d, enregistrer, toast, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
 import { EXERCICES, GROUPES, SEANCES, exo } from '../metier/donnees.js';
 import { chargeDe, historiqueExo, seancesMemeCharge, tendance } from '../metier/progression.js';
-import { dateCourte, dateLongue, esc, mmss, nb } from '../outils.js';
+import { aujourdhui, dateCourte, dateLongue, debutSemaine, esc, ilYa, mmss, nb } from '../outils.js';
+import { musclesOublies, niveauMuscle, records, seriesParMuscle } from '../metier/bilan.js';
+import { carteMuscles } from '../carte-muscles.js';
+import { texteRecord } from './seance.js';
 
 /** Exercices ayant au moins une séance enregistrée, les plus récents d'abord. */
 function exosAvecHistorique() {
@@ -18,6 +21,53 @@ function exosAvecHistorique() {
   for (const s of d.historique) for (const e of s.exercices) ids.set(e.exo, { nom: e.nom, date: s.date > (ids.get(e.exo)?.date || '') ? s.date : ids.get(e.exo).date });
   return [...ids.entries()].map(([id, v]) => ({ id, nom: nomExo(id, v.nom), date: v.date }))
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.nom.localeCompare(b.nom)));
+}
+
+/** Carte « Muscles travaillés » de la semaine en cours (du lundi à aujourd'hui). */
+function blocMuscles() {
+  const { compte, seances, series } = seriesParMuscle(d.historique, debutSemaine(), aujourdhui(), exo);
+  if (!series) {
+    return `<div class="carte pile u-ecart-6"><div class="u-gras-600">Muscles travaillés cette semaine</div>
+      <div class="petit">Pas encore de séance de musculation cette semaine. La carte se remplira après ta prochaine séance.</div></div>`;
+  }
+  const niveaux = Object.fromEntries(Object.entries(compte).map(([m, n]) => [m, niveauMuscle(n)]));
+  const max = Math.max(...Object.values(compte), 12);
+  const barres = Object.entries(compte).sort((a, b) => b[1] - a[1]).map(([m, n]) => `<div class="ligne-muscle">
+      <span class="nom">${esc(m === 'Corps entier' ? 'Haltéro' : m)}</span>
+      <span class="jauge"><span class="n${niveauMuscle(n)}" style="width:${Math.round((n / max) * 100)}%"></span></span>
+      <span class="petit">${n} série${n > 1 ? 's' : ''}</span>
+    </div>`).join('');
+  const oublies = musclesOublies(compte);
+  const liste = oublies.muscles.map((m) => m.toLowerCase()).join(', ');
+  const noms = oublies.seances;
+  const couvre = noms.length === 1 ? `La séance ${noms[0]} les couvre.` : `Les séances ${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]} les couvrent.`;
+  return `<div class="carte pile u-ecart-12">
+      <div class="pile u-ecart-2"><div class="u-gras-600">Muscles travaillés cette semaine</div><div class="petit">${seances} séance${seances > 1 ? 's' : ''} · ${series} série${series > 1 ? 's' : ''}</div></div>
+      ${carteMuscles(niveaux)}
+      <div class="legende-muscles petit"><span><i class="n1"></i>un peu</span><span><i class="n2"></i>correct</span><span><i class="n3"></i>beaucoup</span></div>
+      <div class="pile u-ecart-8">${barres}</div>
+      <div class="petit">Chaque exercice compte pour son muscle principal.</div>
+    </div>
+    ${oublies.muscles.length ? `<div class="bandeau">Pas encore travaillés cette semaine : <strong>${esc(liste)}</strong>. ${couvre}</div>` : ''}`;
+}
+
+/** Page « Mes records » : la meilleure série de chaque exercice, les plus récents d'abord. */
+export function ecranRecords() {
+  const tous = Object.entries(records(d.historique)).filter(([id]) => !estHaltero(exo(id)))
+    .sort((a, b) => (a[1].date < b[1].date ? 1 : a[1].date > b[1].date ? -1 : nomExo(a[0], a[1].nom).localeCompare(nomExo(b[0], b[1].nom))));
+  const haltero = Object.entries(d.records).filter(([id, v]) => v && exo(id));
+  const ligne = (nom, valeur, sous) => `<div class="ligne-record"><span class="pile u-ecart-2 u-flex-1"><span class="nom">${esc(nom)}</span><span class="petit">${sous}</span></span><span class="valeur">${valeur}</span></div>`;
+  return `<main class="ecran">
+    <div class="ligne">
+      <button class="btn-icone" data-action="onglet" data-id="progression" aria-label="Retour">${ICONES.retour}</button>
+      <h1 class="u-flex-1 u-t-26">Mes records</h1>
+    </div>
+    <div class="petit">Ta meilleure série par exercice : la plus lourde, puis le plus de répétitions.</div>
+    ${tous.length ? `<div class="carte liste-records">${tous.map(([id, r]) => ligne(nomExo(id, r.nom), texteRecord(r, exo(id)), ilYa(r.date))).join('')}</div>`
+    : '<div class="carte petit u-t-15">Aucun record pour l\'instant : ils apparaîtront après ta première séance.</div>'}
+    ${haltero.length ? `<div class="sur-titre">Haltérophilie · record sur 1 répétition</div>
+      <div class="carte liste-records theme-haltero">${haltero.map(([id, v]) => ligne(nomExo(id), `${nb(v)} kg`, 'sert à calculer tes charges')).join('')}</div>` : ''}
+  </main>`;
 }
 
 /** Onglet Progression. */
@@ -66,6 +116,10 @@ export function ecranProgression() {
 
   return `<main class="ecran avec-nav">
     <div class="pile u-ecart-6"><div class="sur-titre">Tes charges séance après séance</div><h1>Progression</h1></div>
+    ${blocMuscles()}
+    <button class="choix" data-action="ecran" data-id="records" style="min-height:56px">
+      <span><span class="nom u-t-15">Mes records</span><span class="petit">Ta meilleure série par exercice</span></span>${ICONES.suite}
+    </button>
     <div class="carte pile u-ecart-14 u-pad-16 u-rayon-18">
       <div class="ligne u-items-flex-end">
         <div class="pile u-flex-1 u-ecart-3"><div class="u-t-16 u-gras-600">${esc(sel.nom)}</div><div class="petit">${poidsCorps ? 'Meilleure série' : 'Charge par séance'} · ${n} dernière${n > 1 ? 's' : ''}</div></div>
@@ -117,6 +171,7 @@ export function ecranDetail() {
       <div class="u-t-15 u-interligne-1-45">${esc(def.conseil)}</div>
       <div class="petit">${esc(def.muscles)} · par défaut ${cibleTexte(def.cible, def)}${dans.length ? ` · proposé en ${dans.join(', ')}` : ''}</div>
     </div>
+    ${d.notes[def.id] ? `<div class="carte pile u-ecart-2"><div class="petit">Mes réglages</div><div class="texte-note">${esc(d.notes[def.id])}</div></div>` : ''}
     ${h ? `<div class="carte pile u-ecart-8">
       <div class="ligne"><div class="u-flex-1 u-gras-600">Ton record (1 rep)</div><div class="chiffre u-t-24">${d.records[def.id] ? nb(d.records[def.id]) + ' kg' : '—'}</div></div>
       <div class="petit">Les charges sont calculées en % de ce record : ${def.pcts.map((x) => x + ' %').join(' · ')}.</div>

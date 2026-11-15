@@ -1,12 +1,13 @@
 // Fonctionnement hors ligne (salle sans réseau).
 // Changer VERSION à chaque mise en ligne pour que le téléphone récupère la nouvelle version.
-const VERSION = 'suivi-muscu-0.4.0';
+const VERSION = 'suivi-muscu-0.5.0';
 const FICHIERS = [
   './',
   'index.html',
   'manifest.webmanifest',
   'css/style.css',
   'js/app.js',
+  'js/carte-muscles.js',
   'js/commun.js',
   'js/composition.js',
   'js/etat.js',
@@ -21,6 +22,7 @@ const FICHIERS = [
   'js/ecrans/progression.js',
   'js/ecrans/reglages.js',
   'js/ecrans/seance.js',
+  'js/metier/bilan.js',
   'js/metier/donnees.js',
   'js/metier/hyrox.js',
   'js/metier/import.js',

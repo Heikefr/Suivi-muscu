@@ -8,6 +8,8 @@ export function vide() {
     version: 1, historique: [], exclus: [], enCours: null,
     records: {}, haltero: {}, seancesPerso: [],
     hyroxProfil: null, hyroxAjust: {}, enCoursHyrox: null,
+    // notes : réglages personnels par exercice ; sauvegarde : date de la dernière et fréquence du rappel (jours, 0 = jamais)
+    notes: {}, sauvegarde: { derniere: null, rappel: 7 },
   };
 }
 
@@ -26,6 +28,8 @@ export function valider(d) {
     seancesPerso: Array.isArray(d.seancesPerso) ? d.seancesPerso : [],
     hyroxProfil: d.hyroxProfil && typeof d.hyroxProfil === 'object' ? d.hyroxProfil : null,
     hyroxAjust: objet(d.hyroxAjust),
+    notes: objet(d.notes),
+    sauvegarde: { derniere: null, rappel: 7, ...objet(d.sauvegarde) },
   };
 }
 

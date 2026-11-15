@@ -98,6 +98,16 @@ with sync_playwright() as p:
     pg.wait_for_selector('text=Valider la série 1')
     pg.click('text=+ Ajouter une série')
     photo(pg, 'exercice')
+    # Réglages personnels et échauffement
+    pg.click('[data-action="note"]')
+    pg.fill('#note-texte', 'Banc n°3, prise aux anneaux')
+    photo(pg, 'note-saisie')
+    pg.click('[data-action="note-ok"]')
+    if pg.locator('[data-action="chauffe-ok"]').count():
+        pg.click('[data-action="chauffe-ok"]')
+        photo(pg, 'echauffement')
+        pg.click('[data-action="chauffe-passer"]')
+    photo(pg, 'exercice-avec-note')
     pg.click('[data-action="options"]')
     photo(pg, 'exercice-options')
     pg.click('.feuille [aria-label="Plus lourd"]')
@@ -148,6 +158,9 @@ with sync_playwright() as p:
         pg.wait_for_selector('.feuille')
         photo(pg, 'progression-seance')
         pg.click('.feuille >> text=Fermer')
+    pg.click('button.choix:has-text("Mes records")')
+    photo(pg, 'records')
+    pg.click('[aria-label="Retour"]')
     pg.click('.nav >> text=Exercices')
     photo(pg, 'exercices')
     pg.click('button.choix:has-text("Développé couché barre")')
@@ -202,6 +215,15 @@ with sync_playwright() as p:
     pg.click('[aria-label="Retour"]') if pg.locator('[aria-label="Retour"]').count() else None
     pg.click('.nav >> text=Progression') if pg.locator('.nav').count() else None
     photo(pg, 'progression-finale')
+
+    # --- Rappel de sauvegarde : on fait comme si la dernière datait de 9 jours ---
+    pg.evaluate("() => { const d = JSON.parse(localStorage.getItem('suivi-muscu')); d.sauvegarde = { derniere: '2026-11-06', rappel: 7 }; localStorage.setItem('suivi-muscu', JSON.stringify(d)); }")
+    pg.reload()
+    pg.wait_for_selector('.rappel-sauvegarde')
+    photo(pg, 'accueil-rappel-sauvegarde')
+    pg.click('[aria-label="Réglages"]')
+    pg.click('.puce:has-text("Chaque mois")')
+    photo(pg, 'reglages-rappel')
     nav.close()
 
 json.dump(etapes, open(f'{SORTIE}/html.json', 'w'), ensure_ascii=False, indent=0)
