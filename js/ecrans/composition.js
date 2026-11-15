@@ -17,7 +17,7 @@ export function ecranComposer() {
     return `<div class="case-seance">
       <span class="mini-dessin">${illustration(def.dessin, def.nom, 40)}</span>
       <button class="case-choix" data-action="choix" data-i="${i}">
-        <span class="label petit" style="font-size:11px">${esc(k.role)}</span>
+        <span class="label petit u-t-11">${esc(k.role)}</span>
         <span class="nom-case">${esc(def.nom)} ${ICONES.chevron}</span>
         <span class="petit">${cibleTexte(cible, def)} · ${esc(infoExo(k.exo))}</span>
         ${k.raison ? `<span class="raison">${esc(k.raison)}</span>` : ''}
@@ -29,11 +29,11 @@ export function ecranComposer() {
   return `<main class="ecran">
     <div class="ligne">
       <button class="btn-icone" data-action="onglet" data-id="seances" aria-label="Retour">${ICONES.retour}</button>
-      <div style="flex:1;gap:2px" class="pile"><div class="sur-titre">Composer ta séance</div><h1 style="font-size:26px">${esc(s.nom)}</h1></div>
+      <div class="pile u-flex-1 u-ecart-2"><div class="sur-titre">Composer ta séance</div><h1 class="u-t-26">${esc(s.nom)}</h1></div>
     </div>
     <div class="puces">${puce('suggestion', 'Suggestion')}${puce('derniere', 'Comme la dernière fois')}${puce('courte', 'Courte')}</div>
     <div class="petit">Touche un exercice pour le changer.</div>
-    <div class="pile" style="gap:8px">
+    <div class="pile u-ecart-8">
       ${items || '<div class="carte petit">Aucun exercice : ajoute-en un.</div>'}
       <button class="btn-ajout" data-action="choix" data-i="-1">+ Ajouter un exercice</button>
     </div>
@@ -100,18 +100,18 @@ export function ecranPerso() {
   return `<main class="ecran">
     <div class="ligne">
       <button class="btn-icone" data-action="onglet" data-id="seances" aria-label="Retour">${ICONES.retour}</button>
-      <h1 style="flex:1;font-size:24px">${esc(p.nom || 'Séance personnalisée')}</h1>
+      <h1 class="u-flex-1 u-t-24">${esc(p.nom || 'Séance personnalisée')}</h1>
     </div>
     <label class="recherche">${ICONES.loupe}<input id="recherche" type="search" placeholder="Rechercher un exercice" aria-label="Rechercher un exercice" value="${esc(p.q)}" autocomplete="off"></label>
     <div class="puces defile">${filtres}</div>
     <div class="petit">Coche les exercices dans l'ordre où tu veux les faire.</div>
-    <div class="pile" style="gap:8px" id="perso-liste">${listePerso()}</div>
+    <div class="pile u-ecart-8" id="perso-liste">${listePerso()}</div>
     <div class="barre-action">
-      <div class="ligne" style="gap:10px">
-        <button class="btn-secondaire" style="width:auto;padding:0 16px;height:60px" data-action="enregistrer" ${n ? '' : 'disabled'}>${p.id ? 'Mettre à jour' : 'Enregistrer'}</button>
+      <div class="ligne u-ecart-10">
+        <button class="btn-secondaire u-l-auto u-pad-0-16 u-h-60" data-action="enregistrer" ${n ? '' : 'disabled'}>${p.id ? 'Mettre à jour' : 'Enregistrer'}</button>
         <button class="btn-principal" data-action="go-perso" ${n ? '' : 'disabled'}>Démarrer · ${n} exercice${n > 1 ? 's' : ''}</button>
       </div>
-      ${p.id ? '<button class="btn-lien btn-danger" data-action="suppr-perso" style="width:100%">Supprimer cette séance enregistrée</button>' : ''}
+      ${p.id ? '<button class="btn-lien btn-danger u-l-100" data-action="suppr-perso">Supprimer cette séance enregistrée</button>' : ''}
     </div>
   </main>`;
 }

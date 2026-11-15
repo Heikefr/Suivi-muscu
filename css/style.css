@@ -383,3 +383,78 @@ button.conseillee { width: 100%; font-family: inherit; }
 
 /* Schémas : le fond sert à détourer le bras qui passe devant le buste. */
 .dessin, .mini-dessin { --fond-dessin: var(--carte2); }
+
+/* ---------- Classes utilitaires ----------
+   Petits réglages ponctuels (espacement, taille de texte…) utilisés dans les écrans.
+   Nom = u-<réglage>-<valeur>. Le !important garantit qu'elles passent après les règles du composant. */
+.u-aff-flex { display: flex !important; }
+.u-aligne-center { text-align: center !important; }
+.u-aligne-left { text-align: left !important; }
+.u-bord-none { border: none !important; }
+.u-c-accent { color: var(--accent) !important; }
+.u-c-doux { color: var(--doux) !important; }
+.u-c-texte { color: var(--texte) !important; }
+.u-cbord-accent { border-color: var(--accent) !important; }
+.u-cursor-pointer { cursor: pointer !important; }
+.u-ecart-0 { gap: 0 !important; }
+.u-ecart-10 { gap: 10px !important; }
+.u-ecart-12 { gap: 12px !important; }
+.u-ecart-14 { gap: 14px !important; }
+.u-ecart-2 { gap: 2px !important; }
+.u-ecart-22 { gap: 22px !important; }
+.u-ecart-3 { gap: 3px !important; }
+.u-ecart-4 { gap: 4px !important; }
+.u-ecart-6 { gap: 6px !important; }
+.u-ecart-8 { gap: 8px !important; }
+.u-flex-1 { flex: 1 !important; }
+.u-fond-transparent { background: transparent !important; }
+.u-gras-500 { font-weight: 500 !important; }
+.u-gras-600 { font-weight: 600 !important; }
+.u-gras-700 { font-weight: 700 !important; }
+.u-h-60 { height: 60px !important; }
+.u-h-64 { height: 64px !important; }
+.u-h-88 { height: 88px !important; }
+.u-hmin-0 { min-height: 0 !important; }
+.u-hmin-52 { min-height: 52px !important; }
+.u-hmin-56 { min-height: 56px !important; }
+.u-hmin-58 { min-height: 58px !important; }
+.u-hmin-60 { min-height: 60px !important; }
+.u-hmin-64 { min-height: 64px !important; }
+.u-hmin-72 { min-height: 72px !important; }
+.u-interligne-1-45 { line-height: 1.45 !important; }
+.u-interligne-1-5 { line-height: 1.5 !important; }
+.u-items-baseline { align-items: baseline !important; }
+.u-items-center { align-items: center !important; }
+.u-items-flex-end { align-items: flex-end !important; }
+.u-justifie-center { justify-content: center !important; }
+.u-justifie-space-between { justify-content: space-between !important; }
+.u-l-100 { width: 100% !important; }
+.u-l-88 { width: 88px !important; }
+.u-l-auto { width: auto !important; }
+.u-lmin-40 { min-width: 40px !important; }
+.u-md-48 { margin-right: 48px !important; }
+.u-mh-4 { margin-top: 4px !important; }
+.u-opacite-1 { opacity: 1 !important; }
+.u-opacite-85 { opacity: .85 !important; }
+.u-pad-0 { padding: 0 !important; }
+.u-pad-0-16 { padding: 0 16px !important; }
+.u-pad-12 { padding: 12px !important; }
+.u-pad-16 { padding: 16px !important; }
+.u-pad-18 { padding: 18px !important; }
+.u-pad-20 { padding: 20px !important; }
+.u-pad-4-0 { padding: 4px 0 !important; }
+.u-pad-4-14 { padding: 4px 14px !important; }
+.u-rayon-18 { border-radius: 18px !important; }
+.u-t-11 { font-size: 11px !important; }
+.u-t-12 { font-size: 12px !important; }
+.u-t-13 { font-size: 13px !important; }
+.u-t-14 { font-size: 14px !important; }
+.u-t-15 { font-size: 15px !important; }
+.u-t-16 { font-size: 16px !important; }
+.u-t-17 { font-size: 17px !important; }
+.u-t-20 { font-size: 20px !important; }
+.u-t-22 { font-size: 22px !important; }
+.u-t-24 { font-size: 24px !important; }
+.u-t-26 { font-size: 26px !important; }
+.u-t-28 { font-size: 28px !important; }
+.u-t-30 { font-size: 30px !important; }

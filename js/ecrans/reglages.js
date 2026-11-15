@@ -9,29 +9,29 @@ export function ecranReglages() {
   return `<main class="ecran">
     <div class="ligne">
       <button class="btn-icone" data-action="onglet" data-id="seances" aria-label="Retour">${ICONES.retour}</button>
-      <h1 style="flex:1;font-size:26px">Réglages</h1>
+      <h1 class="u-flex-1 u-t-26">Réglages</h1>
     </div>
     <div class="carte pile">
-      <div style="font-weight:600">Tes données</div>
+      <div class="u-gras-600">Tes données</div>
       <div class="petit">${nbS} séance${nbS > 1 ? 's' : ''} enregistrée${nbS > 1 ? 's' : ''}, uniquement sur ce téléphone. Fais une sauvegarde de temps en temps (Fichiers ou iCloud Drive).</div>
       <button class="btn-secondaire" data-action="exporter">Exporter une sauvegarde</button>
-      <label class="btn-secondaire" style="display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <label class="btn-secondaire u-aff-flex u-items-center u-justifie-center u-cursor-pointer">
         Importer un fichier
         <input type="file" class="cache" data-action="importer" accept=".csv,.json,text/csv,application/json,text/plain">
       </label>
       <div class="petit">Accepte une sauvegarde de l'appli (.json) ou ton ancien suivi Google Sheet exporté en CSV (onglet musculation).</div>
     </div>
     ${d.exclus.length ? `<div class="carte pile">
-      <div style="font-weight:600">Exercices exclus</div>
-      <div class="petit" style="font-size:14px">${d.exclus.map((id) => esc(nomExo(id))).join(', ')}</div>
+      <div class="u-gras-600">Exercices exclus</div>
+      <div class="petit u-t-14">${d.exclus.map((id) => esc(nomExo(id))).join(', ')}</div>
       <button class="btn-secondaire" data-action="reinclure">Tout proposer à nouveau</button>
     </div>` : ''}
     <div class="carte pile">
-      <div style="font-weight:600">Tout effacer</div>
+      <div class="u-gras-600">Tout effacer</div>
       <div class="petit">Supprime l'historique, les records et les séances enregistrées de ce téléphone.</div>
       <button class="btn-secondaire btn-danger" data-action="effacer">Effacer toutes les données</button>
     </div>
-    <div class="petit" style="text-align:center">Suivi muscu · version ${VERSION}</div>
+    <div class="petit u-aligne-center">Suivi muscu · version ${VERSION}</div>
   </main>`;
 }
 

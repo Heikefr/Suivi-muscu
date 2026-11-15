@@ -15,7 +15,7 @@ export function enteteSeance(theme) {
   const barres = ec.exercices.map((x) => `<div class="${x.series.length >= x.cible.series ? 'fait' : ''}"></div>`).join('');
   return `<div class="ligne">
       <button class="btn-icone" data-action="quitter" aria-label="Quitter la séance">${ICONES.retour}</button>
-      <div style="flex:1" class="pile">
+      <div class="pile u-flex-1">
         <div class="sur-titre">${esc(ec.nom || seance(ec.seance)?.nom)} · exercice ${ec.index + 1} sur ${ec.exercices.length}</div>
         <div class="barres" style="grid-template-columns:repeat(${ec.exercices.length},minmax(0,1fr))">${barres}</div>
       </div>
@@ -33,7 +33,7 @@ export function ecranExercice() {
   for (let i = 0; i < e.cible.series; i++) {
     if (i < fait) {
       const sr = e.series[i];
-      lignes.push(`<div class="serie faite">${ICONES.coche}<div class="titre">Série ${i + 1}</div><div class="petit" style="font-size:15px">${repsTexte(sr.reps, def)}${def.poidsDuCorps ? '' : ` · ${nb(sr.charge)} kg`}</div></div>`);
+      lignes.push(`<div class="serie faite">${ICONES.coche}<div class="titre">Série ${i + 1}</div><div class="petit u-t-15">${repsTexte(sr.reps, def)}${def.poidsDuCorps ? '' : ` · ${nb(sr.charge)} kg`}</div></div>`);
     } else if (i === fait) {
       lignes.push(`<div class="serie active">
         <div class="titre">Série ${i + 1}</div>
@@ -44,39 +44,39 @@ export function ecranExercice() {
         </div>
       </div>`);
     } else {
-      lignes.push(`<div class="serie avenir"><div class="rond"></div><div class="titre">Série ${i + 1}</div><div style="font-size:15px">à venir</div></div>`);
+      lignes.push(`<div class="serie avenir"><div class="rond"></div><div class="titre">Série ${i + 1}</div><div class="u-t-15">à venir</div></div>`);
     }
   }
 
   const unite = def.materiel === 'halteres' ? 'par haltère · ' : '';
   return `<main class="ecran">
     ${enteteSeance()}
-    <h1 style="font-size:28px">${esc(def.nom)}</h1>
-    <div class="carte illu" style="padding:12px">
+    <h1 class="u-t-28">${esc(def.nom)}</h1>
+    <div class="carte illu u-pad-12">
       <div class="dessin">${illustration(def.dessin, def.nom)}</div>
       <div class="texte">
-        <div class="label" style="color:var(--accent)">Conseil</div>
+        <div class="label u-c-accent">Conseil</div>
         <div>${esc(def.conseil)}</div>
-        <div class="petit" style="font-size:12px">${esc(def.muscles)}</div>
+        <div class="petit u-t-12">${esc(def.muscles)}</div>
       </div>
     </div>
     <div class="grille2">
       <button class="case" data-action="options" ${def.poidsDuCorps ? 'disabled style="opacity:1"' : ''}>
         <span class="petit">Poids conseillé</span>
         <span class="chiffre" style="${e.charge == null || def.poidsDuCorps ? 'font-size:24px' : ''}">${chargeTexte(e.charge, def)}</span>
-        <span class="petit" style="font-size:12px">${def.poidsDuCorps ? esc(e.raison) : unite + esc(e.charge !== e.conseillee ? 'modifié pour cette séance' : e.raison)}</span>
+        <span class="petit u-t-12">${def.poidsDuCorps ? esc(e.raison) : unite + esc(e.charge !== e.conseillee ? 'modifié pour cette séance' : e.raison)}</span>
       </button>
       <div class="carte case">
         <span class="petit">Objectif</span>
         <span class="chiffre">${e.cible.repsMin} à ${e.cible.repsMax}</span>
-        <span class="petit" style="font-size:12px">${def.unite === 's' ? 'secondes' : 'reps'} · ${e.cible.series} séries</span>
+        <span class="petit u-t-12">${def.unite === 's' ? 'secondes' : 'reps'} · ${e.cible.series} séries</span>
       </div>
     </div>
-    <div class="pile" style="gap:8px">${lignes.join('')}</div>
+    <div class="pile u-ecart-8">${lignes.join('')}</div>
     <div class="pousse"></div>
-    <div class="pile" style="gap:6px">
+    <div class="pile u-ecart-6">
       <button class="btn-principal" data-action="valider">Valider la série ${fait + 1}</button>
-      <div class="ligne" style="justify-content:space-between">
+      <div class="ligne u-justifie-space-between">
         <button class="btn-lien" data-action="ajout-serie">+ Ajouter une série</button>
         <button class="btn-lien" data-action="options">Poids · remplacer</button>
       </div>
@@ -94,35 +94,35 @@ export function ecranHaltero(e, def) {
   while (pcts.length < total) pcts.push(pcts[pcts.length - 1]);
   const dec = d.haltero[def.id] || 0;
   const pct = pcts[Math.min(fait, pcts.length - 1)] + dec;
-  const faites = e.series.map((sr, i) => `<div class="serie faite">${ICONES.coche}<div class="titre">Série ${i + 1} · ${nb(sr.charge)} kg</div><div class="petit" style="font-size:14px">${sr.reps} sur ${reps}</div></div>`).join('');
+  const faites = e.series.map((sr, i) => `<div class="serie faite">${ICONES.coche}<div class="titre">Série ${i + 1} · ${nb(sr.charge)} kg</div><div class="petit u-t-14">${sr.reps} sur ${reps}</div></div>`).join('');
   const reste = total - fait - 1;
   const boutons = Array.from({ length: reps + 1 }, (_, n) => `<button class="${n === reps ? 'on' : ''}" data-action="valider-h" data-n="${n}">${n === reps && reps > 1 ? `${n} · toutes` : n}</button>`).join('');
   return `<main class="ecran theme-haltero">
     ${enteteSeance()}
     <h1>${esc(def.nom)}</h1>
-    <div class="carte pile" style="gap:12px;padding:16px;border-radius:18px">
-      <div class="ligne" style="align-items:flex-end">
-        <div style="flex:1;gap:4px" class="pile">
+    <div class="carte pile u-ecart-12 u-pad-16 u-rayon-18">
+      <div class="ligne u-items-flex-end">
+        <div class="pile u-flex-1 u-ecart-4">
           <div class="petit">Série ${fait + 1} sur ${total} · ${repsTexte(reps, def)}</div>
           <button class="chiffre lien-chiffre" data-action="options" style="font-size:${charge == null ? 30 : 52}px">${charge == null ? 'À choisir' : nb(charge) + ' kg'}</button>
         </div>
-        ${record ? `<div class="pile" style="align-items:flex-end;gap:4px"><div class="chiffre" style="font-size:28px;color:var(--accent)">${nb(pct)} %</div><div class="petit" style="font-size:12px">de ton record ${nb(record)} kg</div></div>` : ''}
+        ${record ? `<div class="pile u-items-flex-end u-ecart-4"><div class="chiffre u-t-28 u-c-accent">${nb(pct)} %</div><div class="petit u-t-12">de ton record ${nb(record)} kg</div></div>` : ''}
       </div>
-      <div class="petit">${record ? `Montée en charge : ${pcts.map((x, i) => (i === fait ? `<strong style="color:var(--texte)">${nb(x + dec)} %</strong>` : `${nb(x + dec)} %`)).join(' · ')}` : esc(e.raison)}</div>
+      <div class="petit">${record ? `Montée en charge : ${pcts.map((x, i) => (i === fait ? `<strong class="u-c-texte">${nb(x + dec)} %</strong>` : `${nb(x + dec)} %`)).join(' · ')}` : esc(e.raison)}</div>
     </div>
-    <div class="pile" style="gap:8px">
+    <div class="pile u-ecart-8">
       ${faites}
-      ${reste > 0 ? `<div class="serie avenir"><div class="rond"></div><div class="titre">${reste > 1 ? `Séries ${fait + 2} à ${total}` : `Série ${total}`}</div><div style="font-size:14px">à venir</div></div>` : ''}
+      ${reste > 0 ? `<div class="serie avenir"><div class="rond"></div><div class="titre">${reste > 1 ? `Séries ${fait + 2} à ${total}` : `Série ${total}`}</div><div class="u-t-14">à venir</div></div>` : ''}
     </div>
-    <div class="carte illu" style="padding:12px">
-      <div class="dessin" style="width:88px;height:88px">${illustration(def.dessin, def.nom, 80)}</div>
-      <div class="texte"><div class="label" style="color:var(--accent)">Conseil</div><div>${esc(def.conseil)}</div></div>
+    <div class="carte illu u-pad-12">
+      <div class="dessin u-l-88 u-h-88">${illustration(def.dessin, def.nom, 80)}</div>
+      <div class="texte"><div class="label u-c-accent">Conseil</div><div>${esc(def.conseil)}</div></div>
     </div>
     <div class="pousse"></div>
-    <div class="pile" style="gap:10px">
-      <div style="font-size:14px;font-weight:600;text-align:center">Combien de reps réussies sur ${reps}&nbsp;?</div>
+    <div class="pile u-ecart-10">
+      <div class="u-t-14 u-gras-600 u-aligne-center">Combien de reps réussies sur ${reps}&nbsp;?</div>
       <div class="choix-reps" style="grid-template-columns:repeat(${reps + 1},minmax(0,1fr))">${boutons}</div>
-      <div class="ligne" style="justify-content:space-between">
+      <div class="ligne u-justifie-space-between">
         <button class="btn-lien" data-action="ajout-serie">+ Ajouter une série</button>
         <button class="btn-lien" data-action="options">Poids · record</button>
       </div>
@@ -141,9 +141,9 @@ export function ecranRecup() {
   const btnR = (v, t) => `<button data-action="ressenti" data-v="${v}" class="${derSerie?.ressenti === v ? 'on' : ''}" aria-pressed="${derSerie?.ressenti === v}">${t}</button>`;
   const prochaineCharge = chargeSerie(e, e.series.length);
   return `<main class="ecran ${theme}" style="gap:22px">
-    <div class="pile" style="gap:6px;text-align:center">
+    <div class="pile u-ecart-6 u-aligne-center">
       <div class="sur-titre">${esc(nomExo(exoFait.exo))} · série ${r.serieIndex + 1} validée</div>
-      <h1 style="font-size:28px" id="recup-titre">Récupération</h1>
+      <h1 class="u-t-28" id="recup-titre">Récupération</h1>
     </div>
     <div class="minuteur">
       <svg aria-hidden="true" width="240" height="240" viewBox="0 0 240 240" fill="none">
@@ -160,15 +160,15 @@ export function ecranRecup() {
       <button class="btn-secondaire" data-action="ajuster" data-d="15">+ 15 s</button>
       <button class="btn-secondaire" data-action="fin-recup">Passer</button>
     </div>
-    <div class="carte pile" style="gap:12px;padding:16px">
-      <div style="font-size:15px;font-weight:600">Comment était cette série&nbsp;?</div>
-      <div class="grille3 choix-ressenti" style="gap:8px">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
+    <div class="carte pile u-ecart-12 u-pad-16">
+      <div class="u-t-15 u-gras-600">Comment était cette série&nbsp;?</div>
+      <div class="grille3 choix-ressenti u-ecart-8">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
       <div class="petit">Facultatif. Sert à ajuster le poids conseillé de la prochaine séance.</div>
     </div>
     <div class="pousse"></div>
-    <button class="choix" data-action="fin-recup" style="background:transparent">
+    <button class="choix u-fond-transparent" data-action="fin-recup">
       <span>
-        <span class="label petit" style="color:var(--doux)">Ensuite</span>
+        <span class="label petit u-c-doux">Ensuite</span>
         <span class="nom">${e === exoFait ? '' : esc(def.nom) + ' · '}Série ${e.series.length + 1} sur ${e.cible.series}${def.poidsDuCorps ? '' : ` · ${chargeTexte(prochaineCharge, def)}`}</span>
         <span class="petit">Objectif ${e.cible.repsMin === e.cible.repsMax ? e.cible.repsMin : `${e.cible.repsMin} à ${e.cible.repsMax}`} ${def.unite === 's' ? 'secondes' : 'reps'}</span>
       </span>
@@ -195,22 +195,22 @@ export function ecranFin() {
   const der = derExo.series[derExo.series.length - 1];
   const btnR = (v, t) => `<button data-action="ressenti-fin" data-v="${v}" class="${der.ressenti === v ? 'on' : ''}" aria-pressed="${der.ressenti === v}">${t}</button>`;
   return `<main class="ecran">
-    <div class="pile" style="gap:6px">
+    <div class="pile u-ecart-6">
       <div class="sur-titre">${esc(s.nom)} · ${dateLongue(s.date)}</div>
       <h1>Séance terminée</h1>
     </div>
     ${(ui.finInfos || []).map((t) => `<div class="bandeau">${esc(t)}</div>`).join('')}
     <div class="grille3">
-      <div class="carte case"><span class="petit">Durée</span><span class="chiffre" style="font-size:24px">${minutes} min</span></div>
-      <div class="carte case"><span class="petit">Séries</span><span class="chiffre" style="font-size:24px">${nbSeries}</span></div>
-      <div class="carte case"><span class="petit">Volume</span><span class="chiffre" style="font-size:24px">${Math.round(volume)} kg</span></div>
+      <div class="carte case"><span class="petit">Durée</span><span class="chiffre u-t-24">${minutes} min</span></div>
+      <div class="carte case"><span class="petit">Séries</span><span class="chiffre u-t-24">${nbSeries}</span></div>
+      <div class="carte case"><span class="petit">Volume</span><span class="chiffre u-t-24">${Math.round(volume)} kg</span></div>
     </div>
-    <div class="carte pile" style="gap:12px;padding:16px">
-      <div style="font-size:15px;font-weight:600">Et la dernière série&nbsp;?</div>
-      <div class="grille3 choix-ressenti" style="gap:8px">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
+    <div class="carte pile u-ecart-12 u-pad-16">
+      <div class="u-t-15 u-gras-600">Et la dernière série&nbsp;?</div>
+      <div class="grille3 choix-ressenti u-ecart-8">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
     </div>
     <div class="pile">
-      ${s.exercices.map((e) => `<div class="carte"><div style="font-weight:600">${esc(nomExo(e.exo, e.nom))}</div><div class="petit">${resumeSeries(e.series, exo(e.exo))}</div></div>`).join('')}
+      ${s.exercices.map((e) => `<div class="carte"><div class="u-gras-600">${esc(nomExo(e.exo, e.nom))}</div><div class="petit">${resumeSeries(e.series, exo(e.exo))}</div></div>`).join('')}
     </div>
     <button class="btn-principal" data-action="onglet" data-id="seances">Retour à l'accueil</button>
   </main>`;

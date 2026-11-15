@@ -17,8 +17,8 @@ export function ecranProgression() {
   const liste = exosAvecHistorique();
   if (!liste.length) {
     return `<main class="ecran avec-nav">
-      <div class="pile" style="gap:6px"><div class="sur-titre">Tes charges séance après séance</div><h1>Progression</h1></div>
-      <div class="carte petit" style="font-size:15px">Aucune séance pour l'instant. Fais ta première séance, ou importe ton ancien suivi depuis les réglages.</div>
+      <div class="pile u-ecart-6"><div class="sur-titre">Tes charges séance après séance</div><h1>Progression</h1></div>
+      <div class="carte petit u-t-15">Aucune séance pour l'instant. Fais ta première séance, ou importe ton ancien suivi depuis les réglages.</div>
       <button class="btn-secondaire" data-action="ecran" data-id="reglages">Ouvrir les réglages</button>
     </main>${nav('progression')}`;
   }
@@ -45,22 +45,22 @@ export function ecranProgression() {
       : memes > 1 ? `${nb(c)} kg depuis ${memes} séances` : `${nb(c)} kg · ${dateCourte(p[p.length - 1].date)}`;
     const mot = { hausse: 'En hausse', stable: 'Stable', baisse: 'En baisse' }[t];
     return `<button class="choix ${x.id === sel.id ? 'selection' : ''}" data-action="prog" data-id="${esc(x.id)}" style="min-height:60px">
-      <span><span class="nom" style="font-size:15px">${esc(x.nom)}</span><span class="petit">${sous}</span></span>
+      <span><span class="nom u-t-15">${esc(x.nom)}</span><span class="petit">${sous}</span></span>
       <span class="${t}" style="font-size:14px;font-weight:700">${mot}</span>
     </button>`;
   }).join('');
 
   const seancesRecentes = [...d.historique].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12).map((s) => `
     <button class="choix" data-action="voir-seance" data-id="${esc(s.id)}" style="min-height:56px">
-      <span><span class="nom" style="font-size:15px">${esc(s.nom || s.seance)}</span><span class="petit">${dateLongue(s.date)} · ${s.hyrox ? `Hyrox · ${mmss(s.hyrox.total)}` : `${s.exercices.length} exercices`}</span></span>
+      <span><span class="nom u-t-15">${esc(s.nom || s.seance)}</span><span class="petit">${dateLongue(s.date)} · ${s.hyrox ? `Hyrox · ${mmss(s.hyrox.total)}` : `${s.exercices.length} exercices`}</span></span>
       ${ICONES.suite}
     </button>`).join('');
 
   return `<main class="ecran avec-nav">
-    <div class="pile" style="gap:6px"><div class="sur-titre">Tes charges séance après séance</div><h1>Progression</h1></div>
-    <div class="carte pile" style="gap:14px;padding:16px;border-radius:18px">
-      <div class="ligne" style="align-items:flex-end">
-        <div style="flex:1;gap:3px" class="pile"><div style="font-size:16px;font-weight:600">${esc(sel.nom)}</div><div class="petit">${poidsCorps ? 'Meilleure série' : 'Charge par séance'} · ${n} dernière${n > 1 ? 's' : ''}</div></div>
+    <div class="pile u-ecart-6"><div class="sur-titre">Tes charges séance après séance</div><h1>Progression</h1></div>
+    <div class="carte pile u-ecart-14 u-pad-16 u-rayon-18">
+      <div class="ligne u-items-flex-end">
+        <div class="pile u-flex-1 u-ecart-3"><div class="u-t-16 u-gras-600">${esc(sel.nom)}</div><div class="petit">${poidsCorps ? 'Meilleure série' : 'Charge par séance'} · ${n} dernière${n > 1 ? 's' : ''}</div></div>
         <div class="chiffre ${deltaV > 0 ? 'hausse' : deltaV < 0 ? 'baisse' : 'stable'}" style="font-size:26px">${deltaV > 0 ? '+' : ''}${nb(deltaV)}${uniteV}</div>
       </div>
       <div class="graph" style="${cols}">
@@ -68,8 +68,8 @@ export function ecranProgression() {
       </div>
       <div class="dates" style="${cols}">${passe.map((p) => `<div>${dateCourte(p.date)}</div>`).join('')}</div>
     </div>
-    <div class="pile" style="gap:8px"><div class="sur-titre">Tous les exercices</div>${lignes}</div>
-    <div class="pile" style="gap:8px"><div class="sur-titre">Dernières séances</div>${seancesRecentes}</div>
+    <div class="pile u-ecart-8"><div class="sur-titre">Tous les exercices</div>${lignes}</div>
+    <div class="pile u-ecart-8"><div class="sur-titre">Dernières séances</div>${seancesRecentes}</div>
   </main>${nav('progression')}`;
 }
 
@@ -78,14 +78,14 @@ export function ecranExercices() {
     const items = EXERCICES.filter((e) => e.groupe === g).map((e) => `
       <button class="choix ${d.exclus.includes(e.id) ? 'exclu' : ''}" data-action="detail" data-id="${e.id}" style="min-height:64px">
         <span class="mini-dessin">${illustration(e.dessin, e.nom, 40)}</span>
-        <span><span class="nom" style="font-size:15px">${esc(e.nom)}</span><span class="petit">${esc(e.muscles)}${d.exclus.includes(e.id) ? ' · exclu' : ''}</span></span>
+        <span><span class="nom u-t-15">${esc(e.nom)}</span><span class="petit">${esc(e.muscles)}${d.exclus.includes(e.id) ? ' · exclu' : ''}</span></span>
         ${ICONES.suite}
       </button>`).join('');
     return `<div class="groupe-titre ${g === 'Haltérophilie' ? 'h' : ''}">${esc(g)}</div>${items}`;
   }).join('');
   return `<main class="ecran avec-nav">
-    <div class="pile" style="gap:6px"><div class="sur-titre">${EXERCICES.length} exercices · conseils et historique</div><h1>Exercices</h1></div>
-    <div class="pile" style="gap:8px">${groupes}</div>
+    <div class="pile u-ecart-6"><div class="sur-titre">${EXERCICES.length} exercices · conseils et historique</div><h1>Exercices</h1></div>
+    <div class="pile u-ecart-8">${groupes}</div>
   </main>${nav('exercices')}`;
 }
 
@@ -98,23 +98,23 @@ export function ecranDetail() {
   return `<main class="ecran ${h ? 'theme-haltero' : ''}">
     <div class="ligne">
       <button class="btn-icone" data-action="onglet" data-id="${ui.retour}" aria-label="Retour">${ICONES.retour}</button>
-      <div class="sur-titre" style="flex:1">${esc(def.groupe)}</div>
+      <div class="sur-titre u-flex-1">${esc(def.groupe)}</div>
     </div>
-    <h1 style="font-size:28px">${esc(def.nom)}</h1>
-    <div class="carte" style="display:flex;justify-content:center;padding:20px">${illustration(def.dessin, def.nom, 180)}</div>
-    <div class="carte pile" style="gap:6px">
-      <div class="label" style="color:var(--accent)">Conseil</div>
-      <div style="font-size:15px;line-height:1.45">${esc(def.conseil)}</div>
+    <h1 class="u-t-28">${esc(def.nom)}</h1>
+    <div class="carte u-aff-flex u-justifie-center u-pad-20">${illustration(def.dessin, def.nom, 180)}</div>
+    <div class="carte pile u-ecart-6">
+      <div class="label u-c-accent">Conseil</div>
+      <div class="u-t-15 u-interligne-1-45">${esc(def.conseil)}</div>
       <div class="petit">${esc(def.muscles)} · par défaut ${cibleTexte(def.cible, def)}${dans.length ? ` · proposé en ${dans.join(', ')}` : ''}</div>
     </div>
-    ${h ? `<div class="carte pile" style="gap:8px">
-      <div class="ligne"><div style="flex:1;font-weight:600">Ton record (1 rep)</div><div class="chiffre" style="font-size:24px">${d.records[def.id] ? nb(d.records[def.id]) + ' kg' : '—'}</div></div>
+    ${h ? `<div class="carte pile u-ecart-8">
+      <div class="ligne"><div class="u-flex-1 u-gras-600">Ton record (1 rep)</div><div class="chiffre u-t-24">${d.records[def.id] ? nb(d.records[def.id]) + ' kg' : '—'}</div></div>
       <div class="petit">Les charges sont calculées en % de ce record : ${def.pcts.map((x) => x + ' %').join(' · ')}.</div>
       <button class="btn-secondaire" data-action="record" data-id="${def.id}">Modifier mon record</button>
     </div>` : ''}
-    <div class="carte pile" style="gap:8px">
-      <div style="font-weight:600">Dernières fois</div>
-      ${passe.length ? `<div class="liste-perf">${passe.map((p) => `<div><span>${dateCourte(p.date)}</span><span class="petit" style="font-size:14px">${resumeSeries(p.series, def)}</span></div>`).join('')}</div>` : '<div class="petit">Jamais fait pour l\'instant.</div>'}
+    <div class="carte pile u-ecart-8">
+      <div class="u-gras-600">Dernières fois</div>
+      ${passe.length ? `<div class="liste-perf">${passe.map((p) => `<div><span>${dateCourte(p.date)}</span><span class="petit u-t-14">${resumeSeries(p.series, def)}</span></div>`).join('')}</div>` : '<div class="petit">Jamais fait pour l\'instant.</div>'}
     </div>
     <button class="btn-secondaire" data-action="exclure" data-id="${def.id}">${exclu ? 'Le proposer à nouveau' : 'Ne plus me le proposer'}</button>
     <div class="petit">${exclu ? "Exclu : il n'apparaît plus dans les suggestions ni dans la séance personnalisée." : "S'il est exclu, il n'apparaît plus dans les suggestions ni dans la séance personnalisée."}</div>

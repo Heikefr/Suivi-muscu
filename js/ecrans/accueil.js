@@ -16,14 +16,14 @@ export function ecranAccueil() {
     haut = `<div class="conseillee">
       <div class="label">Séance en cours</div>
       <div class="titre">${esc(d.enCours.nom || seance(d.enCours.seance)?.nom)}</div>
-      <div style="font-size:14px">${faitesSeries} série${faitesSeries > 1 ? 's' : ''} validée${faitesSeries > 1 ? 's' : ''}</div>
+      <div class="u-t-14">${faitesSeries} série${faitesSeries > 1 ? 's' : ''} validée${faitesSeries > 1 ? 's' : ''}</div>
       <button class="btn-sombre" data-action="reprendre">Reprendre la séance</button>
     </div>`;
   } else {
     haut = `<button class="conseillee" data-action="composer" data-id="${prochaine.id}" style="border:none;text-align:left">
       <span class="label">Conseillée aujourd'hui</span>
-      <span class="titre" style="font-size:30px">${esc(prochaine.nom)}</span>
-      <span style="font-size:14px;font-weight:500">${esc(prochaine.description)} · ${derniereFois(prochaine.id)}</span>
+      <span class="titre u-t-30">${esc(prochaine.nom)}</span>
+      <span class="u-t-14 u-gras-500">${esc(prochaine.description)} · ${derniereFois(prochaine.id)}</span>
     </button>`;
   }
   const off = d.enCours ? 'disabled' : '';
@@ -34,7 +34,7 @@ export function ecranAccueil() {
     </button>`).join('');
   const enregistrees = d.seancesPerso.map((s) => `
     <button class="choix" data-action="perso" data-id="${esc(s.id)}" ${off} style="min-height:56px">
-      <span><span class="nom" style="font-size:15px">${esc(s.nom)}</span><span class="petit">${s.exercices.length} exercices · ${derniereFois('perso:' + s.id)}</span></span>
+      <span><span class="nom u-t-15">${esc(s.nom)}</span><span class="petit">${s.exercices.length} exercices · ${derniereFois('perso:' + s.id)}</span></span>
       ${ICONES.suite}
     </button>`).join('');
 
@@ -49,9 +49,9 @@ export function ecranAccueil() {
       ${autres}
       <button class="choix pointille-accent" data-action="perso" ${off} style="min-height:72px">
         <span class="carre-plus">${ICONES.plus}</span>
-        <span><span class="nom titre-seance" style="font-size:20px">Séance personnalisée</span><span class="petit">Choisis parmi tous les exercices, haltéro compris</span></span>
+        <span><span class="nom titre-seance">Séance personnalisée</span><span class="petit">Choisis parmi tous les exercices, haltéro compris</span></span>
       </button>
-      ${enregistrees ? `<div class="sur-titre" style="margin-top:4px">Tes séances enregistrées</div>${enregistrees}` : ''}
+      ${enregistrees ? `<div class="sur-titre u-mh-4">Tes séances enregistrées</div>${enregistrees}` : ''}
     </div>
   </main>${nav('seances')}`;
 }

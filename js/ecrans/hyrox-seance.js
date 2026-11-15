@@ -27,9 +27,9 @@ export function ecranHyroxSeance() {
     if (i === h.e) {
       return `<div class="etape active">
         <span class="mini-dessin">${illustration(e.dessin, e.texte, 40)}</span>
-        <span class="txt"><span class="nom" style="font-size:17px">${esc(e.texte)}</span>
+        <span class="txt"><span class="nom u-t-17">${esc(e.texte)}</span>
         ${[allureTexte(e, reperes), noteCharge(e, niveauCharges(d.hyroxProfil)), e.detail].filter(Boolean).map((x) => `<span class="petit">${esc(x)}</span>`).join('')}
-        ${e.conseil ? `<span class="petit" style="color:var(--texte);opacity:.85">${esc(e.conseil)}</span>` : ''}</span>
+        ${e.conseil ? `<span class="petit u-c-texte u-opacite-85">${esc(e.conseil)}</span>` : ''}</span>
       </div>`;
     }
     return ligneEtape(e, reperes, 'avenir');
@@ -43,25 +43,25 @@ export function ecranHyroxSeance() {
   return `<main class="ecran theme-hyrox">
     <div class="ligne">
       <button class="btn-icone" data-action="quitter-h" aria-label="Quitter la séance">${ICONES.retour}</button>
-      <div style="flex:1" class="pile">
+      <div class="pile u-flex-1">
         <div class="sur-titre">${esc(h.nom)} · bloc ${h.b + 1} sur ${h.blocs.length}</div>
         <div class="barres-h">${barres}</div>
       </div>
     </div>
-    <div class="ligne" style="align-items:baseline">
-      <h1 style="flex:1;font-size:26px">${esc(bloc.nom)}</h1>
-      ${bloc.tours > 1 ? `<span style="font-size:15px;font-weight:700;color:var(--accent)">Tour ${h.t + 1} sur ${bloc.tours}</span>` : ''}
+    <div class="ligne u-items-baseline">
+      <h1 class="u-flex-1 u-t-26">${esc(bloc.nom)}</h1>
+      ${bloc.tours > 1 ? `<span class="u-t-15 u-gras-700 u-c-accent">Tour ${h.t + 1} sur ${bloc.tours}</span>` : ''}
     </div>
-    <div class="pile" style="align-items:center;gap:2px;padding:4px 0">
+    <div class="pile u-items-center u-ecart-2 u-pad-4-0">
       <div class="temps-h" id="h-temps" role="timer">0:00</div>
       <div class="petit" id="h-sous">&nbsp;</div>
       ${toursFaits.length ? `<div class="petit">${toursFaits.join(' · ')}</div>` : ''}
     </div>
-    <div class="pile" style="gap:8px">${lignes}</div>
+    <div class="pile u-ecart-8">${lignes}</div>
     <div class="pousse"></div>
-    ${h.pause ? '<div class="bandeau" style="text-align:center">En pause</div>' : ''}
-    <button class="btn-principal" style="height:64px" data-action="${h.pause ? 'pause-toggle' : 'etape-ok'}">${h.pause ? 'Reprendre' : libelle}</button>
-    <div class="ligne" style="justify-content:space-between">
+    ${h.pause ? '<div class="bandeau u-aligne-center">En pause</div>' : ''}
+    <button class="btn-principal u-h-64" data-action="${h.pause ? 'pause-toggle' : 'etape-ok'}">${h.pause ? 'Reprendre' : libelle}</button>
+    <div class="ligne u-justifie-space-between">
       <button class="btn-lien" data-action="pause-toggle">${h.pause ? 'Reprendre' : 'Pause'}</button>
       <button class="btn-lien" data-action="etape-passer">Passer l'étape</button>
     </div>
@@ -187,19 +187,19 @@ export function ecranHyroxFin() {
     const de = sp.filter((x) => x.b === b);
     const nbTours = Math.max(...de.map((x) => x.t)) + 1;
     if (nbTours > 1) {
-      return Array.from({ length: nbTours }, (_, t) => `<div><span>Tour ${t + 1}</span><span class="petit" style="font-size:14px">${mmss(de.filter((x) => x.t === t).reduce((a, x) => a + x.duree, 0))}</span></div>`).join('');
+      return Array.from({ length: nbTours }, (_, t) => `<div><span>Tour ${t + 1}</span><span class="petit u-t-14">${mmss(de.filter((x) => x.t === t).reduce((a, x) => a + x.duree, 0))}</span></div>`).join('');
     }
-    return de.filter((x) => !x.repos).map((x) => `<div><span>${esc(x.texte)}</span><span class="petit" style="font-size:14px">${x.passe ? 'passé' : mmss(x.duree)}</span></div>`).join('');
+    return de.filter((x) => !x.repos).map((x) => `<div><span>${esc(x.texte)}</span><span class="petit u-t-14">${x.passe ? 'passé' : mmss(x.duree)}</span></div>`).join('');
   }).join('');
   return `<main class="ecran theme-hyrox">
-    <div class="pile" style="gap:6px"><div class="sur-titre">${esc(s.nom)} · ${dateLongue(s.date)}</div><h1>Séance terminée</h1></div>
+    <div class="pile u-ecart-6"><div class="sur-titre">${esc(s.nom)} · ${dateLongue(s.date)}</div><h1>Séance terminée</h1></div>
     ${(ui.finInfos || []).map((t) => `<div class="bandeau">${esc(t)}</div>`).join('')}
-    <div class="carte pile" style="align-items:center;gap:2px;padding:18px">
+    <div class="carte pile u-items-center u-ecart-2 u-pad-18">
       <div class="petit">Temps total</div><div class="temps-h">${mmss(s.hyrox.total)}</div>
     </div>
-    <div class="carte pile" style="gap:12px;padding:16px">
-      <div style="font-size:15px;font-weight:600">Comment était cette séance&nbsp;?</div>
-      <div class="grille3 choix-ressenti" style="gap:8px">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
+    <div class="carte pile u-ecart-12 u-pad-16">
+      <div class="u-t-15 u-gras-600">Comment était cette séance&nbsp;?</div>
+      <div class="grille3 choix-ressenti u-ecart-8">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
       <div class="petit">Facile : un tour de plus la prochaine fois. Dur : un tour de moins.</div>
     </div>
     <div class="carte liste-perf">${detail}</div>

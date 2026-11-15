@@ -30,8 +30,8 @@ export function resumeEtapes(s) {
 
 export function ecranHyroxIntro() {
   return `<main class="ecran avec-nav theme-hyrox">
-    <div class="pile" style="gap:6px"><div class="sur-titre">Hyrox</div><h1>Prépare ton Hyrox</h1></div>
-    <div class="carte pile" style="gap:8px;font-size:15px;line-height:1.45">
+    <div class="pile u-ecart-6"><div class="sur-titre">Hyrox</div><h1>Prépare ton Hyrox</h1></div>
+    <div class="carte pile u-ecart-8 u-t-15 u-interligne-1-45">
       <div>Indique une date de compétition et l'appli construit ton plan semaine par semaine. Ou entraîne-toi librement, sans date.</div>
       <div class="petit">Tes repères (10 km, rameur, SkiErg) servent à calculer tes allures. Si tu ne les connais pas, la séance test les mesure.</div>
     </div>
@@ -76,7 +76,7 @@ export function ecranHyrox() {
   let prochaineMarquee = false;
   const lignes = w.items.map((it) => {
     if (it.type === 'competition') {
-      return `<div class="carte ligne" style="min-height:64px"><span class="rond-h"></span><span class="pile" style="gap:3px;flex:1"><span style="font-weight:700;font-size:16px">Jour J</span><span class="petit">${dateLongue(p.date)} · bonne compétition&nbsp;!</span></span></div>`;
+      return `<div class="carte ligne u-hmin-64"><span class="rond-h"></span><span class="pile u-ecart-3 u-flex-1"><span class="u-gras-700 u-t-16">Jour J</span><span class="petit">${dateLongue(p.date)} · bonne compétition&nbsp;!</span></span></div>`;
     }
     let faite = null;
     if (it.type === 'hyrox' && hy[it.id]?.length) faite = hy[it.id].shift();
@@ -84,14 +84,14 @@ export function ecranHyrox() {
     const titre = it.type === 'hyrox' ? seanceHyrox(it.id).nom : `Muscu · ${seance(prochaineSeance()).nom}`;
     if (faite) {
       const info = faite === true ? 'Faite cette semaine' : `Faite ${ilYa(faite.date)}${faite.hyrox?.ressenti ? ` · ${faite.hyrox.ressenti}` : ''}`;
-      return `<div class="carte ligne" style="min-height:64px"><span class="rond-h fait">${ICONES.coche.replace('var(--accent)', 'var(--fond)')}</span><span class="pile" style="gap:3px;flex:1"><span style="font-weight:600;font-size:16px">${esc(titre)}</span><span class="petit">${info}</span></span></div>`;
+      return `<div class="carte ligne u-hmin-64"><span class="rond-h fait">${ICONES.coche.replace('var(--accent)', 'var(--fond)')}</span><span class="pile u-ecart-3 u-flex-1"><span class="u-gras-600 u-t-16">${esc(titre)}</span><span class="petit">${info}</span></span></div>`;
     }
     const action = it.type === 'hyrox' ? `data-action="hyrox-apercu" data-id="${it.id}"` : `data-action="composer" data-id="${prochaineSeance()}"`;
     const sous = it.type === 'hyrox' ? `${esc(resumeEtapes(seanceHyrox(it.id)))} · ${dureeSeanceHyrox(seanceHyrox(it.id))}` : 'Ouvre ta séance de muscu habituelle';
     if (!prochaineMarquee) {
       prochaineMarquee = true;
       return `<button class="conseillee" ${action} style="border:none;text-align:left">
-        <span class="label">Prochaine</span><span class="titre" style="font-size:22px">${esc(titre)}</span><span style="font-size:13px;font-weight:500">${sous}</span></button>`;
+        <span class="label">Prochaine</span><span class="titre u-t-22">${esc(titre)}</span><span class="u-t-13 u-gras-500">${sous}</span></button>`;
     }
     return `<button class="choix" ${action} style="min-height:72px"><span><span class="nom">${esc(titre)}</span><span class="petit">${sous}</span></span>${ICONES.suite}</button>`;
   }).join('');
@@ -105,14 +105,14 @@ export function ecranHyrox() {
       <button class="btn-icone" data-action="hyrox-profil" aria-label="Profil Hyrox">${ICONES.reglages}</button>
     </div>
     ${carteReprise()}
-    <div class="carte pile" style="gap:10px">
-      <div class="ligne"><div style="flex:1;font-weight:600">Semaine 1 sur ${plan.length}</div><div class="label" style="color:var(--accent);font-size:12px">${NOMS_PHASE[w.phase]}</div></div>
+    <div class="carte pile u-ecart-10">
+      <div class="ligne"><div class="u-flex-1 u-gras-600">Semaine 1 sur ${plan.length}</div><div class="label u-c-accent u-t-12">${NOMS_PHASE[w.phase]}</div></div>
       <div class="segments" style="grid-template-columns:repeat(${plan.length},minmax(0,1fr))">${segments}</div>
-      <div class="petit">${suite.length ? `Ensuite : ${suite.join(', puis ')}` : 'Dernière ligne droite'} · <button class="btn-lien" style="min-height:0;padding:0;font-size:13px;color:var(--accent)" data-action="voir-plan">Voir tout le plan</button></div>
+      <div class="petit">${suite.length ? `Ensuite : ${suite.join(', puis ')}` : 'Dernière ligne droite'} · <button class="btn-lien u-hmin-0 u-pad-0 u-t-13 u-c-accent" data-action="voir-plan">Voir tout le plan</button></div>
     </div>
     <div class="sur-titre">Cette semaine · ${nbHy} Hyrox${nbMu ? ` + ${nbMu} muscu` : ''}</div>
-    <div class="pile" style="gap:8px">${lignes}</div>
-    <button class="btn-ajout" style="border-color:var(--accent)" data-action="hyrox-libre">Faire une autre séance Hyrox (libre)</button>
+    <div class="pile u-ecart-8">${lignes}</div>
+    <button class="btn-ajout u-cbord-accent" data-action="hyrox-libre">Faire une autre séance Hyrox (libre)</button>
   </main>${nav('hyrox')}`;
 }
 
@@ -139,12 +139,12 @@ export function ecranHyroxLibre(avecRetour) {
     ${passee ? `<div class="bandeau">Ta compétition du ${dateCourte(p.date)} est passée. Entre une nouvelle date dans ton profil pour un nouveau plan.</div>` : ''}
     <button class="conseillee" data-action="hyrox-apercu" data-id="${sug}" style="border:none;text-align:left">
       <span class="label">Suggérée${der ? ` · faite ${ilYa(der)}` : ' · jamais faite'}</span>
-      <span class="titre" style="font-size:22px">${esc(s.nom)}</span>
-      <span style="font-size:13px;font-weight:500">${esc(resumeEtapes(s))} · ${dureeSeanceHyrox(s)}</span>
+      <span class="titre u-t-22">${esc(s.nom)}</span>
+      <span class="u-t-13 u-gras-500">${esc(resumeEtapes(s))} · ${dureeSeanceHyrox(s)}</span>
     </button>
-    <div class="pile" style="gap:8px">${LIBRES.filter((x) => x !== sug).map(carte).join('')}
-      <button class="choix pointille" data-action="hyrox-apercu" data-id="test" style="min-height:64px">
-        <span><span class="nom" style="font-size:15px">Séance test</span><span class="petit">Mesure tes repères : 1 km course, SkiErg et rameur</span></span>${ICONES.suite}</button>
+    <div class="pile u-ecart-8">${LIBRES.filter((x) => x !== sug).map(carte).join('')}
+      <button class="choix pointille u-hmin-64" data-action="hyrox-apercu" data-id="test">
+        <span><span class="nom u-t-15">Séance test</span><span class="petit">Mesure tes repères : 1 km course, SkiErg et rameur</span></span>${ICONES.suite}</button>
     </div>
   </main>${avecRetour ? '' : nav('hyrox')}`;
 }
@@ -156,7 +156,7 @@ export function ligneEtape(e, reperes, etat = '', duree = null) {
   return `<div class="etape ${etat}">
     <span class="mini-dessin">${illustration(e.dessin, e.texte, 40)}</span>
     <span class="txt"><span class="nom">${esc(e.texte)}</span>${info ? `<span class="petit">${esc(info)}</span>` : ''}</span>
-    ${duree != null ? `<span class="petit" style="font-size:14px">${duree}</span>` : ''}
+    ${duree != null ? `<span class="petit u-t-14">${duree}</span>` : ''}
   </div>`;
 }
 
@@ -168,12 +168,12 @@ export function ecranHyroxApercu() {
   return `<main class="ecran theme-hyrox">
     <div class="ligne">
       <button class="btn-icone" data-action="onglet" data-id="hyrox" aria-label="Retour">${ICONES.retour}</button>
-      <div class="sur-titre" style="flex:1">${dureeSeanceHyrox(s)}${ajust ? ` · adaptée à ton ressenti (${ajust > 0 ? '+' : ''}${ajust} tour${Math.abs(ajust) > 1 ? 's' : ''})` : ''}</div>
+      <div class="sur-titre u-flex-1">${dureeSeanceHyrox(s)}${ajust ? ` · adaptée à ton ressenti (${ajust > 0 ? '+' : ''}${ajust} tour${Math.abs(ajust) > 1 ? 's' : ''})` : ''}</div>
     </div>
-    <h1 style="font-size:28px">${esc(s.nom)}</h1>
-    <div class="petit" style="font-size:15px">${esc(s.description)}</div>
-    ${blocs.map((b) => `<div class="pile" style="gap:8px">
-      <div class="ligne"><div class="sur-titre" style="flex:1;font-weight:700;color:var(--texte)">${esc(b.nom)}</div>${b.tours > 1 ? `<div class="label" style="color:var(--accent);font-size:12px">${b.tours} tours</div>` : ''}</div>
+    <h1 class="u-t-28">${esc(s.nom)}</h1>
+    <div class="petit u-t-15">${esc(s.description)}</div>
+    ${blocs.map((b) => `<div class="pile u-ecart-8">
+      <div class="ligne"><div class="sur-titre u-flex-1 u-gras-700 u-c-texte">${esc(b.nom)}</div>${b.tours > 1 ? `<div class="label u-c-accent u-t-12">${b.tours} tours</div>` : ''}</div>
       ${b.etapes.map((e) => ligneEtape(e, reperes)).join('')}
     </div>`).join('')}
     ${!d.hyroxProfil?.reperes || !Object.keys(d.hyroxProfil.reperes).length ? '<div class="petit">Sans repères, les allures sont données en sensations. Renseigne-les dans ton profil ou fais la séance test.</div>' : ''}
@@ -196,41 +196,41 @@ export function ecranHyroxProfil() {
   return `<main class="ecran theme-hyrox">
     <div class="ligne">
       <button class="btn-icone" data-action="onglet" data-id="hyrox" aria-label="Retour">${ICONES.retour}</button>
-      <h1 style="flex:1;font-size:26px">Ton profil Hyrox</h1>
+      <h1 class="u-flex-1 u-t-26">Ton profil Hyrox</h1>
     </div>
     <div class="segment">
       <button class="${f.mode === 'competition' ? 'on' : ''}" data-action="hp" data-champ="mode" data-v="competition">Préparer une compétition</button>
       <button class="${f.mode === 'libre' ? 'on' : ''}" data-action="hp" data-champ="mode" data-v="libre">Hyrox libre</button>
     </div>
-    ${f.mode === 'competition' ? `<label class="carte ligne" style="min-height:64px">
-      <span class="pile" style="gap:2px;flex:1"><span class="petit">Date de la compétition</span>
+    ${f.mode === 'competition' ? `<label class="carte ligne u-hmin-64">
+      <span class="pile u-ecart-2 u-flex-1"><span class="petit">Date de la compétition</span>
       <input type="date" id="hp-date" class="champ-date" min="${auj}" value="${esc(f.date || '')}"></span>
-      <span class="label" style="color:var(--accent);font-size:12px">${restantes ? `${restantes} semaine${restantes > 1 ? 's' : ''}` : ''}</span>
+      <span class="label u-c-accent u-t-12">${restantes ? `${restantes} semaine${restantes > 1 ? 's' : ''}` : ''}</span>
     </label>` : ''}
-    <div class="pile" style="gap:8px">
+    <div class="pile u-ecart-8">
       <div class="sur-titre">Catégorie</div>
       <div class="puces">${puce('niveau', 'open', 'Open')}${puce('niveau', 'pro', 'Pro')}</div>
       <div class="puces">${puce('format', 'solo', 'Solo')}${puce('format', 'duo', 'Duo')}${puce('format', 'relais', 'Relais')}</div>
       <div class="puces">${puce('genre', 'femme', 'Femme')}${puce('genre', 'homme', 'Homme')}${f.format === 'duo' ? puce('genre', 'mixte', 'Mixte') : ''}</div>
       ${f.format === 'relais' ? '<div class="petit">En relais, chacun prend les charges de son sexe : choisis le tien.</div>' : ''}
-      <div class="carte petit" style="font-size:13px;line-height:1.5">${(() => {
+      <div class="carte petit u-t-13 u-interligne-1-5">${(() => {
     const n = niveauCharges(f);
     const c = CHARGES[n];
-    return `<strong style="color:var(--accent)">Charges niveau ${n}</strong> · sled push ${c.sledPush} kg · sled pull ${c.sledPull} kg (traîneau compris) · farmers 2 × ${c.farmers} kg · sac ${c.fentes} kg · wall ball ${c.wallball} kg`;
+    return `<strong class="u-c-accent">Charges niveau ${n}</strong> · sled push ${c.sledPush} kg · sled pull ${c.sledPull} kg (traîneau compris) · farmers 2 × ${c.farmers} kg · sac ${c.fentes} kg · wall ball ${c.wallball} kg`;
   })()}</div>
     </div>
-    <div class="pile" style="gap:8px">
+    <div class="pile u-ecart-8">
       <div class="sur-titre">Tes 3 séances par semaine</div>
-      <div class="carte pile" style="gap:10px">
-        <div class="ligne"><span style="flex:1;font-weight:600">Hyrox</span>
-          <div class="stepper"><button data-action="hp-h" data-d="-1" aria-label="Moins d'Hyrox">−</button><div class="val" style="min-width:40px">${f.hyroxParSemaine}</div><button data-action="hp-h" data-d="1" aria-label="Plus d'Hyrox">+</button></div></div>
-        <div class="ligne"><span style="flex:1;font-weight:600">Muscu</span><div class="val chiffre" style="font-size:20px;min-width:40px;text-align:center;margin-right:48px">${3 - f.hyroxParSemaine}</div></div>
-        <div class="petit" style="color:var(--accent)">${f.mode === 'competition' && restantes ? `Conseillé à ${restantes} semaine${restantes > 1 ? 's' : ''} de la compétition : ${conseil} Hyrox + ${3 - conseil} muscu` : `Conseillé : ${conseil} Hyrox + ${3 - conseil} muscu`}</div>
+      <div class="carte pile u-ecart-10">
+        <div class="ligne"><span class="u-flex-1 u-gras-600">Hyrox</span>
+          <div class="stepper"><button data-action="hp-h" data-d="-1" aria-label="Moins d'Hyrox">−</button><div class="val u-lmin-40">${f.hyroxParSemaine}</div><button data-action="hp-h" data-d="1" aria-label="Plus d'Hyrox">+</button></div></div>
+        <div class="ligne"><span class="u-flex-1 u-gras-600">Muscu</span><div class="val chiffre u-t-20 u-lmin-40 u-aligne-center u-md-48">${3 - f.hyroxParSemaine}</div></div>
+        <div class="petit u-c-accent">${f.mode === 'competition' && restantes ? `Conseillé à ${restantes} semaine${restantes > 1 ? 's' : ''} de la compétition : ${conseil} Hyrox + ${3 - conseil} muscu` : `Conseillé : ${conseil} Hyrox + ${3 - conseil} muscu`}</div>
       </div>
     </div>
-    <div class="pile" style="gap:8px">
+    <div class="pile u-ecart-8">
       <div class="sur-titre">Tes repères (pour calculer tes allures)</div>
-      <div class="carte pile" style="gap:0;padding:4px 14px">
+      <div class="carte pile u-ecart-0 u-pad-4-14">
         ${repere('course10k', '10 km course', '/km', 10)}
         ${repere('rameur1k', '1 000 m rameur', '/500 m', 2)}
         ${repere('ski1k', '1 000 m SkiErg', '/500 m', 2)}
