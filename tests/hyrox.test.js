@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SEANCES_HYROX, genererPlan, semainesRestantes, phaseSemaine, allureTexte, lireTemps, ecrireTemps,
-  reperesDepuisTest, suggestionLibre, ajustement, repartitionConseillee,
+  reperesDepuisTest, suggestionLibre, ajustement, repartitionConseillee, niveauCharges, noteCharge,
 } from '../js/hyrox.js';
 import { dessinExiste } from '../js/illustrations.js';
 
@@ -61,4 +61,24 @@ test('suggestion libre et ajustement', () => {
   assert.equal(suggestionLibre(h), 'intervalles-course');
   assert.equal(ajustement(0, 'dur'), -1);
   assert.equal(ajustement(2, 'facile'), 2);
+});
+
+test('niveau de charges selon la catégorie', () => {
+  assert.equal(niveauCharges({ niveau: 'open', format: 'duo', genre: 'femme' }), 1);
+  assert.equal(niveauCharges({ niveau: 'pro', format: 'duo', genre: 'femme' }), 2);
+  assert.equal(niveauCharges({ niveau: 'open', format: 'duo', genre: 'mixte' }), 2);
+  assert.equal(niveauCharges({ niveau: 'open', format: 'solo', genre: 'homme' }), 2);
+  assert.equal(niveauCharges({ niveau: 'pro', format: 'duo', genre: 'homme' }), 3);
+  assert.equal(niveauCharges({ niveau: 'pro', format: 'relais', genre: 'homme' }), 2);
+  assert.equal(niveauCharges({ niveau: 'open', format: 'relais', genre: 'femme' }), 1);
+});
+
+test('charges affichées', () => {
+  assert.equal(noteCharge({ charge: 'sledPush', intensite: 'compet' }, 1), '102 kg, traîneau compris');
+  assert.equal(noteCharge({ charge: 'sledPull', intensite: 'compet' }, 2), '103 kg, traîneau compris');
+  assert.equal(noteCharge({ charge: 'farmers', intensite: 'compet' }, 3), '2 × 32 kg');
+  assert.equal(noteCharge({ charge: 'wallball', intensite: 'compet' }, 1), 'balle de 4 kg');
+  assert.equal(noteCharge({ charge: 'fentes', intensite: 'compet' }, 2), 'sac de 20 kg');
+  assert.equal(noteCharge({ charge: 'sledPush', intensite: 'compet' }, null), 'charge de compétition');
+  assert.equal(noteCharge({ texte: 'Repos' }, 1), '');
 });

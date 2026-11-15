@@ -22,28 +22,28 @@ const rameur = (m, delta = 3) => ({
   texte: `${dist(m)} rameur`, dessin: 'h-rameur', allure: { type: 'rameur', delta },
   conseil: 'Jambes, puis buste, puis bras. Retour dans l\'ordre inverse, sans te précipiter.',
 });
-const sledPush = (m = 50, note = 'charge de compétition') => ({
-  texte: `${m} m sled push`, dessin: 'h-sled-push', note,
+const sledPush = (m = 50, intensite = 'compet') => ({
+  texte: `${m} m sled push`, dessin: 'h-sled-push', charge: 'sledPush', intensite,
   conseil: 'Bras tendus ou fléchis, corps penché, petits pas rapides. Ne t\'arrête pas au milieu.',
 });
-const sledPull = (m = 50, note = 'charge de compétition') => ({
-  texte: `${m} m sled pull`, dessin: 'h-sled-pull', note,
+const sledPull = (m = 50, intensite = 'compet') => ({
+  texte: `${m} m sled pull`, dessin: 'h-sled-pull', charge: 'sledPull', intensite,
   conseil: 'Recule en tirant la corde main sur main, jambes fléchies, dos droit.',
 });
 const bbj = (m = 80) => ({
   texte: `${m} m burpees sauts en longueur`, dessin: 'h-bbj',
   conseil: 'Burpee, puis saut pieds joints vers l\'avant. Trouve un rythme régulier, pas de sprint.',
 });
-const farmers = (m = 200, note = 'charge de compétition') => ({
-  texte: `${m} m farmers carry`, dessin: 'h-farmers', note,
+const farmers = (m = 200, intensite = 'compet') => ({
+  texte: `${m} m farmers carry`, dessin: 'h-farmers', charge: 'farmers', intensite,
   conseil: 'Épaules basses, gainage serré, pas rapides. Pose les kettlebells avant de lâcher.',
 });
-const fentes = (m = 100, note = 'sac de sable de compétition') => ({
-  texte: `${m} m fentes sac de sable`, dessin: 'h-fentes', note,
+const fentes = (m = 100) => ({
+  texte: `${m} m fentes sac de sable`, dessin: 'h-fentes', charge: 'fentes', intensite: 'compet',
   conseil: 'Sac sur les épaules, genou arrière qui touche le sol à chaque pas, buste droit.',
 });
 const wallBalls = (n) => ({
-  texte: `${n} wall balls`, dessin: 'h-wallball',
+  texte: `${n} wall balls`, dessin: 'h-wallball', charge: 'wallball', intensite: 'compet',
   conseil: 'Squat complet, lance avec les jambes. Fais des séries courtes avant d\'être à bout.',
 });
 const velo = (min) => ({ texte: `${min} min vélo facile`, dessin: 'h-velo', duree: min * 60, conseil: 'Pour chauffer : tu dois pouvoir parler.' });
@@ -56,6 +56,54 @@ const emom = (min, texte) => ({
   texte: `EMOM ${min} min`, dessin: 'h-emom', emom: min, detail: texte,
   conseil: 'Au début de chaque minute, fais le travail, puis récupère jusqu\'à la minute suivante.',
 });
+
+// ---------- Charges de compétition ----------
+// Poids des sleds : total, traîneau compris.
+
+export const CHARGES = {
+  1: { sledPush: 102, sledPull: 78, farmers: 16, fentes: 10, wallball: 4 },
+  2: { sledPush: 152, sledPull: 103, farmers: 24, fentes: 20, wallball: 6 },
+  3: { sledPush: 202, sledPull: 153, farmers: 32, fentes: 30, wallball: 9 },
+};
+
+// Niveau 1 : femme Open (solo, duo, relais) · niveau 2 : homme Open, femme Pro, duo mixte, relais hommes
+// niveau 3 : homme Pro (solo, duo). Relais : charges du sexe de la personne.
+export function niveauCharges(profil) {
+  if (!profil) return null;
+  const { niveau = 'open', format = 'solo', genre = 'femme' } = profil;
+  if (format === 'relais') return genre === 'homme' ? 2 : 1;
+  if (format === 'duo' && genre === 'mixte') return 2;
+  if (genre === 'homme') return niveau === 'pro' ? 3 : 2;
+  return niveau === 'pro' ? 2 : 1;
+}
+
+const arrondi5 = (x) => Math.round(x / 5) * 5;
+
+// Texte de la charge d'une étape selon le niveau ('' si l'étape n'a pas de charge).
+export function noteCharge(etape, niveau) {
+  if (!etape.charge) return etape.note || '';
+  const c = niveau ? CHARGES[niveau] : null;
+  const i = etape.intensite || 'compet';
+  if (!c) {
+    return { compet: 'charge de compétition', plus: 'un peu plus lourd que la compétition', legere: 'charge légère' }[i];
+  }
+  const v = c[etape.charge];
+  switch (etape.charge) {
+    case 'sledPush':
+    case 'sledPull':
+      if (i === 'plus') return `≈ ${arrondi5(v * 1.15)} kg, traîneau compris (compétition : ${v} kg)`;
+      if (i === 'legere') return `≈ ${arrondi5(v * 0.6)} kg, traîneau compris`;
+      return `${v} kg, traîneau compris`;
+    case 'farmers':
+      return i === 'plus' ? `2 × ${v + 8} kg (compétition : 2 × ${v} kg)` : `2 × ${v} kg`;
+    case 'fentes':
+      return `sac de ${v} kg`;
+    case 'wallball':
+      return `balle de ${v} kg`;
+    default:
+      return '';
+  }
+}
 
 // ---------- Séances types ----------
 // a = ajustement selon le ressenti (−2 à +2 tours sur la partie principale).
@@ -98,9 +146,9 @@ export const SEANCES_HYROX = [
     description: 'Sled, fentes, farmers carry et wall balls : la force spécifique des ateliers.',
     blocs: (a) => [
       echauffementErgo,
-      { nom: 'Sled', tours: tours(4, a), etapes: [sledPush(25, 'un peu plus lourd que la compétition'), repos(60), sledPull(25, 'un peu plus lourd que la compétition'), repos(90)] },
+      { nom: 'Sled', tours: tours(4, a), etapes: [sledPush(25, 'plus'), repos(60), sledPull(25, 'plus'), repos(90)] },
       { nom: 'EMOM', tours: 1, etapes: [emom(10, 'Minutes impaires : 15 wall balls · minutes paires : 20 m fentes sac de sable')] },
-      { nom: 'Portés', tours: tours(3, a), etapes: [farmers(100, 'charge lourde'), repos(60)] },
+      { nom: 'Portés', tours: tours(3, a), etapes: [farmers(100, 'plus'), repos(60)] },
       retourCalme,
     ],
   },
@@ -138,7 +186,7 @@ export const SEANCES_HYROX = [
     id: 'activation', nom: 'Activation avant compétition', duree: 30,
     description: 'Semaine de compétition : garder du rythme sans se fatiguer.',
     blocs: () => [
-      { nom: 'Principal', tours: 1, etapes: [courseMin(15, 'facile'), rameur(500, 0), repos(120), sledPush(25, 'charge légère'), repos(120), course(500, 'compromis')] },
+      { nom: 'Principal', tours: 1, etapes: [courseMin(15, 'facile'), rameur(500, 0), repos(120), sledPush(25, 'legere'), repos(120), course(500, 'compromis')] },
       { nom: 'Retour au calme', tours: 1, etapes: [mobilite(8)] },
     ],
   },

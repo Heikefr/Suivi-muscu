@@ -11,9 +11,10 @@ import { illustration } from './illustrations.js';
 import {
   SEANCES_HYROX, LIBRES, seanceHyrox, allureTexte, lireTemps, ecrireTemps, reperesDepuisTest,
   genererPlan, semainesRestantes, joursRestants, repartitionConseillee, suggestionLibre, ajustement,
+  CHARGES, niveauCharges, noteCharge,
 } from './hyrox.js';
 
-export const VERSION = '0.3';
+export const VERSION = '0.3.1';
 
 let d = charger();
 const ui = {
@@ -974,7 +975,7 @@ function ecranHyroxLibre(avecRetour) {
 function ligneEtape(e, reperes, etat = '', duree = null) {
   const al = allureTexte(e, reperes);
   const allure = al && /\d/.test(al) ? `à ${al}` : al;
-  const info = e.repos ? '' : [allure, e.note, e.detail].filter(Boolean).join(' · ');
+  const info = e.repos ? '' : [allure, noteCharge(e, niveauCharges(d.hyroxProfil)), e.detail].filter(Boolean).join(' · ');
   return `<div class="etape ${etat}">
     <span class="mini-dessin">${illustration(e.dessin, e.texte, 40)}</span>
     <span class="txt"><span class="nom">${esc(e.texte)}</span>${info ? `<span class="petit">${esc(info)}</span>` : ''}</span>
@@ -1023,7 +1024,7 @@ function ecranHyroxSeance() {
       return `<div class="etape active">
         <span class="mini-dessin">${illustration(e.dessin, e.texte, 40)}</span>
         <span class="txt"><span class="nom" style="font-size:17px">${esc(e.texte)}</span>
-        ${[allureTexte(e, reperes), e.note, e.detail].filter(Boolean).map((x) => `<span class="petit">${esc(x)}</span>`).join('')}
+        ${[allureTexte(e, reperes), noteCharge(e, niveauCharges(d.hyroxProfil)), e.detail].filter(Boolean).map((x) => `<span class="petit">${esc(x)}</span>`).join('')}
         ${e.conseil ? `<span class="petit" style="color:var(--texte);opacity:.85">${esc(e.conseil)}</span>` : ''}</span>
       </div>`;
     }
@@ -1231,8 +1232,14 @@ function ecranHyroxProfil() {
     <div class="pile" style="gap:8px">
       <div class="sur-titre">Catégorie</div>
       <div class="puces">${puce('niveau', 'open', 'Open')}${puce('niveau', 'pro', 'Pro')}</div>
-      <div class="puces">${puce('format', 'solo', 'Solo')}${puce('format', 'duo', 'Duo')}</div>
-      <div class="puces">${puce('genre', 'femme', 'Femme')}${puce('genre', 'homme', 'Homme')}${puce('genre', 'mixte', 'Mixte')}</div>
+      <div class="puces">${puce('format', 'solo', 'Solo')}${puce('format', 'duo', 'Duo')}${puce('format', 'relais', 'Relais')}</div>
+      <div class="puces">${puce('genre', 'femme', 'Femme')}${puce('genre', 'homme', 'Homme')}${f.format === 'duo' ? puce('genre', 'mixte', 'Mixte') : ''}</div>
+      ${f.format === 'relais' ? '<div class="petit">En relais, chacun prend les charges de son sexe : choisis le tien.</div>' : ''}
+      <div class="carte petit" style="font-size:13px;line-height:1.5">${(() => {
+    const n = niveauCharges(f);
+    const c = CHARGES[n];
+    return `<strong style="color:var(--accent)">Charges niveau ${n}</strong> · sled push ${c.sledPush} kg · sled pull ${c.sledPull} kg (traîneau compris) · farmers 2 × ${c.farmers} kg · sac ${c.fentes} kg · wall ball ${c.wallball} kg`;
+  })()}</div>
     </div>
     <div class="pile" style="gap:8px">
       <div class="sur-titre">Tes 3 séances par semaine</div>
@@ -1707,7 +1714,11 @@ const actions = {
     ui.ecran = 'hyrox-profil';
     window.scrollTo(0, 0);
   },
-  hp(el) { ui.hp[el.dataset.champ] = el.dataset.v; },
+  hp(el) {
+    ui.hp[el.dataset.champ] = el.dataset.v;
+    // Mixte n'existe qu'en duo.
+    if (ui.hp.format !== 'duo' && ui.hp.genre === 'mixte') ui.hp.genre = 'femme';
+  },
   'hp-h'(el) { ui.hp.hyroxParSemaine = Math.min(3, Math.max(1, ui.hp.hyroxParSemaine + Number(el.dataset.d))); },
   'hp-ok'() {
     const f = ui.hp;
