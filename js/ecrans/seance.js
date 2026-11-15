@@ -35,14 +35,10 @@ export function texteRecord(r, def) {
   return r.charge > 0 ? `${nb(r.charge)} kg × ${r.reps}` : repsTexte(r.reps, def || {});
 }
 
-/** Ligne « Mes réglages » d'un exercice (hauteur du siège, prise…), ou le lien pour en ajouter. */
+/** Lien « Mes réglages » d'un exercice (hauteur du siège, prise…), ou le lien pour en ajouter. */
 function blocNote(def) {
   const note = d.notes[def.id];
-  if (!note) return `<button class="btn-lien lien-note" data-action="note" data-id="${def.id}">+ Ajouter mes réglages (siège, prise…)</button>`;
-  return `<button class="carte note" data-action="note" data-id="${def.id}">
-    <span class="pile u-ecart-2 u-flex-1"><span class="petit">Mes réglages</span><span class="texte-note">${esc(note)}</span></span>
-    <span class="petit u-c-accent">Modifier</span>
-  </button>`;
+  return `<button class="btn-lien lien-note ${note ? 'remplie' : ''}" data-action="note" data-id="${def.id}">${note ? `Mes réglages : ${esc(note)}` : '+ Ajouter mes réglages (siège, prise…)'}</button>`;
 }
 
 /**
@@ -65,66 +61,71 @@ function blocChauffe(e, def) {
   </div>`;
 }
 
-/** Écran d'un exercice de musculation (délègue à ecranHaltero pour l'haltérophilie). */
+/**
+ * Écran d'un exercice de musculation (délègue à ecranHaltero pour l'haltérophilie).
+ * Disposition compacte : le poids et les répétitions se règlent directement ici,
+ * les séries tiennent sur une ligne, et le bouton « Valider » reste visible.
+ */
 export function ecranExercice() {
   const e = exoCourant();
   const def = exo(e.exo);
   if (estHaltero(def)) return ecranHaltero(e, def);
   const fait = e.series.length;
+  const total = e.cible.series;
   const pas = def.unite === 's' ? 5 : 1;
 
-  const lignes = [];
-  for (let i = 0; i < e.cible.series; i++) {
+  // Réglage du poids : absent au poids du corps.
+  const unite = def.materiel === 'halteres' ? 'par haltère · ' : '';
+  const sousPoids = unite + (e.charge !== e.conseillee ? 'modifié pour cette séance' : e.raison);
+  const poids = def.poidsDuCorps
+    ? `<div class="reglage"><div class="centre"><div class="valeur petit-texte">Poids du corps</div><div class="petit">${esc(e.raison)}</div></div></div>`
+    : `<div class="reglage">
+        <button data-action="charge" data-d="-1" aria-label="Moins lourd">−</button>
+        <div class="centre"><div class="valeur ${e.charge == null ? 'petit-texte' : ''}" aria-live="polite">${chargeTexte(e.charge, def)}</div><div class="petit">${esc(sousPoids)}</div></div>
+        <button data-action="charge" data-d="1" aria-label="Plus lourd">+</button>
+      </div>`;
+
+  // Une case par série : faite (avec son résultat), en cours, à venir.
+  const cases = Array.from({ length: total }, (_, i) => {
     if (i < fait) {
       const sr = e.series[i];
-      lignes.push(`<div class="serie faite">${ICONES.coche}<div class="titre">Série ${i + 1}</div><div class="petit u-t-15">${repsTexte(sr.reps, def)}${def.poidsDuCorps ? '' : ` · ${nb(sr.charge)} kg`}</div></div>`);
-    } else if (i === fait) {
-      lignes.push(`<div class="serie active">
-        <div class="titre">Série ${i + 1}</div>
-        <div class="stepper">
-          <button data-action="reps" data-d="-${pas}" aria-label="Moins">−</button>
-          <div class="val" aria-live="polite">${repsTexte(e.reps, def)}</div>
-          <button data-action="reps" data-d="${pas}" aria-label="Plus">+</button>
-        </div>
-      </div>`);
-    } else {
-      lignes.push(`<div class="serie avenir"><div class="rond"></div><div class="titre">Série ${i + 1}</div><div class="u-t-15">à venir</div></div>`);
+      return `<div class="faite"><span>Série ${i + 1}</span><strong>${def.poidsDuCorps ? repsTexte(sr.reps, def) : `${nb(sr.charge)} × ${sr.reps}`}</strong></div>`;
     }
-  }
+    return i === fait ? `<div class="encours"><span>Série ${i + 1}</span><strong>en cours</strong></div>`
+      : `<div><span>Série ${i + 1}</span><strong>à venir</strong></div>`;
+  }).join('');
 
-  const unite = def.materiel === 'halteres' ? 'par haltère · ' : '';
   return `<main class="ecran">
     ${enteteSeance()}
-    <h1 class="u-t-28">${esc(def.nom)}</h1>
-    <div class="carte illu u-pad-12">
-      <div class="dessin">${illustration(def.dessin, def.nom)}</div>
+    <div class="exo-tete">
+      <div class="dessin">${illustration(def.dessin, def.nom, 78)}</div>
       <div class="texte">
-        <div class="label u-c-accent">Conseil</div>
-        <div>${esc(def.conseil)}</div>
-        <div class="petit u-t-12">${esc(def.muscles)}</div>
+        <h1>${esc(def.nom)}</h1>
+        <div class="petit">${esc(def.conseil)}</div>
+        ${blocNote(def)}
       </div>
     </div>
-    ${blocNote(def)}
     ${blocChauffe(e, def)}
-    <div class="grille2">
-      <button class="case" data-action="options" ${def.poidsDuCorps ? 'disabled style="opacity:1"' : ''}>
-        <span class="petit">Poids conseillé</span>
-        <span class="chiffre" style="${e.charge == null || def.poidsDuCorps ? 'font-size:24px' : ''}">${chargeTexte(e.charge, def)}</span>
-        <span class="petit u-t-12">${def.poidsDuCorps ? esc(e.raison) : unite + esc(e.charge !== e.conseillee ? 'modifié pour cette séance' : e.raison)}</span>
-      </button>
-      <div class="carte case">
-        <span class="petit">Objectif</span>
-        <span class="chiffre">${e.cible.repsMin} à ${e.cible.repsMax}</span>
-        <span class="petit u-t-12">${def.unite === 's' ? 'secondes' : 'reps'} · ${e.cible.series} séries</span>
+    <div class="carte saisie">
+      <div class="ligne"><div class="u-flex-1 u-gras-700">Série ${fait + 1} sur ${total}</div>
+        <div class="petit">Objectif ${e.cible.repsMin} à ${e.cible.repsMax} ${def.unite === 's' ? 's' : 'reps'}</div></div>
+      ${poids}
+      <div class="trait"></div>
+      <div class="reglage">
+        <button data-action="reps" data-d="-${pas}" aria-label="Moins">−</button>
+        <div class="centre"><div class="valeur" aria-live="polite">${repsTexte(e.reps, def)}</div><div class="petit">${def.unite === 's' ? 'secondes tenues' : 'répétitions faites'}</div></div>
+        <button data-action="reps" data-d="${pas}" aria-label="Plus">+</button>
       </div>
     </div>
-    <div class="pile u-ecart-8">${lignes.join('')}</div>
+    <div class="cases-series" style="grid-template-columns:repeat(${Math.min(total, 6)},minmax(0,1fr))">${cases}</div>
     <div class="pousse"></div>
     <div class="pile u-ecart-6">
       <button class="btn-principal" data-action="valider">Valider la série ${fait + 1}</button>
-      <div class="ligne u-justifie-space-between">
-        <button class="btn-lien" data-action="ajout-serie">+ Ajouter une série</button>
-        <button class="btn-lien" data-action="options">Poids · remplacer</button>
+      <div class="ligne liens-series">
+        <button class="btn-lien" data-action="retrait-serie" aria-label="Retirer une série" ${total > Math.max(1, fait + 1) ? '' : 'disabled'}>− Série</button>
+        <button class="btn-lien" data-action="ajout-serie" aria-label="Ajouter une série">+ Série</button>
+        <span class="u-flex-1"></span>
+        <button class="btn-lien" data-action="options">Remplacer · passer</button>
       </div>
     </div>
   </main>`;
@@ -334,6 +335,15 @@ export const actions = {
     if (e.plan) e.plan.push(e.plan[e.plan.length - 1]);
     enregistrer();
     toast(`Série ${e.cible.series} ajoutée`);
+    return false;
+  },
+  'retrait-serie'() {
+    const e = exoCourant();
+    // On ne descend pas sous la série en cours (pour arrêter l'exercice : « Remplacer · passer »).
+    if (e.cible.series <= Math.max(1, e.series.length + 1)) return false;
+    e.cible.series -= 1;
+    enregistrer();
+    toast(`${e.cible.series} série${e.cible.series > 1 ? 's' : ''} prévue${e.cible.series > 1 ? 's' : ''}`);
     return false;
   },
   options() { ui.modal = { type: 'options' }; },

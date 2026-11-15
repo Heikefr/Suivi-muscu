@@ -38,7 +38,7 @@ Pas d'outil de construction : du HTML, du CSS et du JavaScript en modules, lus t
 | `js/fenetres.js` | Fenêtres qui s'ouvrent par-dessus l'écran |
 | `js/carte-muscles.js` | Silhouettes face et dos de la carte des muscles travaillés |
 | `js/illustrations.js` | Schémas des exercices, dessinés par du code (muscle travaillé en rouge) |
-| `js/ecrans/` | Un fichier par écran ou groupe d'écrans, avec les actions de ses boutons |
+| `js/ecrans/` | Un fichier par écran (l'accueil « Ma semaine » est dans `accueil.js`) ou groupe d'écrans, avec les actions de ses boutons |
 | `js/metier/` | Calculs sans affichage, couverts par les tests : catalogue, progression, bilans (muscles, records, échauffement, sauvegarde), Hyrox, import, stockage |
 | `css/style.css` | Thèmes, composants, puis classes utilitaires (`u-…`) |
 | `tests/*.test.js` | Tests des calculs : `npm test` |

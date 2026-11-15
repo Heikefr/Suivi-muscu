@@ -68,5 +68,36 @@ export const ICONES = {
 /** Barre d'onglets du bas ; `actif` = onglet surligné. */
 export function nav(actif) {
   const b = (id, nom) => `<button data-action="onglet" data-id="${id}" class="${actif === id ? 'actif' : ''}" ${actif === id ? 'aria-current="page"' : ''}>${ICONES[id]}${nom}</button>`;
-  return `<nav class="nav ${actif === 'hyrox' ? 'theme-hyrox' : ''}"><div>${b('seances', 'Muscu')}${b('hyrox', 'Hyrox')}${b('progression', 'Progression')}${b('exercices', 'Exercices')}</div></nav>`;
+  return `<nav class="nav ${actif === 'hyrox' ? 'theme-hyrox' : ''}"><div>${b('seances', 'Semaine')}${b('hyrox', 'Hyrox')}${b('progression', 'Progression')}${b('exercices', 'Exercices')}</div></nav>`;
+}
+
+// ---------- Pastilles : le petit logo à côté du titre ----------
+
+/** Haltère (musculation). */
+const LOGO_MUSCU = '<svg aria-hidden="true" width="30" height="30" viewBox="0 0 512 512" fill="currentColor"><rect x="150" y="238" width="212" height="36" rx="10"></rect><rect x="116" y="170" width="46" height="172" rx="16"></rect><rect x="350" y="170" width="46" height="172" rx="16"></rect><rect x="70" y="204" width="36" height="104" rx="14"></rect><rect x="406" y="204" width="36" height="104" rx="14"></rect></svg>';
+
+/** Athlète qui pousse le traîneau chargé (Hyrox). Dessin original. */
+const LOGO_HYROX = `<svg aria-hidden="true" width="38" height="38" viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 85H93" stroke-width="2" opacity=".45"></path>
+  <!-- traîneau : patin relevé à l'avant, deux montants, disques empilés sur leur axe -->
+  <path d="M54 80H88Q94 80 94 72" stroke-width="4.5"></path>
+  <path d="M59 80V33M86 80V47" stroke-width="4"></path>
+  <path d="M59 46H86" stroke-width="2.5" opacity=".7"></path>
+  <path d="M72.5 76V50" stroke-width="2.5"></path>
+  <rect x="62.5" y="69" width="20" height="6.5" rx="2.2" fill="currentColor" stroke="none"></rect>
+  <rect x="64" y="61" width="17" height="6.5" rx="2.2" fill="currentColor" stroke="none"></rect>
+  <rect x="65.5" y="53.5" width="14" height="6" rx="2.2" fill="currentColor" stroke="none"></rect>
+  <!-- athlète : buste penché, bras tendus sur les montants, jambes en poussée -->
+  <path d="M20 57L11 68L4 80" stroke-width="7"></path>
+  <path d="M2.5 81.5H9" stroke-width="4.5"></path>
+  <path d="M38 41L20 57" stroke-width="11.5"></path>
+  <path d="M20 57L33 66L27 80" stroke-width="7.5"></path>
+  <path d="M25.5 81.5H33" stroke-width="4.5"></path>
+  <path d="M38 40L58 37.5" stroke-width="6"></path>
+  <circle cx="37" cy="27.5" r="7" fill="currentColor" stroke="none"></circle>
+</svg>`;
+
+/** Pastille de couleur avec le logo de l'univers : 'muscu' ou 'hyrox'. */
+export function pastille(univers) {
+  return `<span class="pastille">${univers === 'hyrox' ? LOGO_HYROX : LOGO_MUSCU}</span>`;
 }

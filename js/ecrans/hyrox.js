@@ -5,7 +5,7 @@
 // Sinon : le mode libre. La séance elle-même est dans hyrox-seance.js.
 // =====================================================================
 
-import { ICONES, nav } from '../commun.js';
+import { ICONES, nav, pastille } from '../commun.js';
 import { prochaineSeance } from '../composition.js';
 import { d, enregistrer, toast, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
@@ -39,7 +39,7 @@ function resumeEtapes(s) {
 /** Présentation, tant qu'aucun profil n'existe. */
 function ecranHyroxIntro() {
   return `<main class="ecran avec-nav theme-hyrox">
-    <div class="pile u-ecart-6"><div class="sur-titre">Hyrox</div><h1>Prépare ton Hyrox</h1></div>
+    <div class="entete">${pastille('hyrox')}<div><div class="sur-titre">Hyrox</div><h1>Prépare ton Hyrox</h1></div></div>
     <div class="carte pile u-ecart-8 u-t-15 u-interligne-1-45">
       <div>Indique une date de compétition et l'appli construit ton plan semaine par semaine. Ou entraîne-toi librement, sans date.</div>
       <div class="petit">Tes repères (10 km, rameur, SkiErg) servent à calculer tes allures. Si tu ne les connais pas, la séance test les mesure.</div>
@@ -74,6 +74,36 @@ function faitesSemaine(w) {
 }
 
 /** Écran principal de l'onglet : le plan de la semaine. */
+/**
+ * Ce que la carte Hyrox de l'accueil doit montrer, selon la situation.
+ * etat : 'encours' (séance commencée), 'sans-profil', 'plan' (prochaine séance du plan),
+ *        'plan-fait' (séances Hyrox de la semaine déjà faites) ou 'libre' (séance suggérée).
+ */
+export function resumeHyrox() {
+  if (d.enCoursHyrox) return { etat: 'encours', titre: d.enCoursHyrox.nom };
+  const p = d.hyroxProfil;
+  if (!p) return { etat: 'sans-profil' };
+  const auj = aujourdhui();
+  if (p.mode !== 'competition' || semainesRestantes(p.date, auj) === 0) {
+    const s = seanceHyrox(suggestionLibre(d.historique));
+    return { etat: 'libre', id: s.id, titre: s.nom, sous: `Séance suggérée · ${dureeSeanceHyrox(s)}` };
+  }
+  const plan = genererPlan(p, auj);
+  const w = plan[0];
+  const { hy } = faitesSemaine(w);
+  const j = joursRestants(p.date, auj);
+  const label = j <= 0 ? "Hyrox · c'est aujourd'hui" : `Hyrox · compétition dans ${j} jour${j > 1 ? 's' : ''}`;
+  const phase = `Semaine 1 sur ${plan.length} · ${w.phase.toLowerCase()}`;
+  // Première séance Hyrox de la semaine qui n'a pas encore été faite.
+  const reste = w.items.filter((it) => it.type === 'hyrox').find((it) => {
+    if (hy[it.id]?.length) { hy[it.id].shift(); return false; }
+    return true;
+  });
+  if (!reste) return { etat: 'plan-fait', label, titre: 'Séances de la semaine faites', sous: phase };
+  const s = seanceHyrox(reste.id);
+  return { etat: 'plan', label, id: s.id, titre: s.nom, sous: `${phase} · ${dureeSeanceHyrox(s)}` };
+}
+
 export function ecranHyrox() {
   const p = d.hyroxProfil;
   if (!p) return ecranHyroxIntro();
@@ -113,6 +143,7 @@ export function ecranHyrox() {
   const suite = plan.slice(1).map((x) => x.phase).filter((x, i, a) => a.indexOf(x) === i && x !== w.phase);
   return `<main class="ecran avec-nav theme-hyrox">
     <div class="entete">
+      ${pastille('hyrox')}
       <div><div class="sur-titre">Hyrox · compétition du ${dateLongue(p.date).replace(/^\S+ /, '')}</div><h1>${j <= 0 ? "C'est aujourd'hui" : `J-${j}`}</h1></div>
       <button class="btn-icone" data-action="hyrox-profil" aria-label="Profil Hyrox">${ICONES.reglages}</button>
     </div>
@@ -144,7 +175,7 @@ export function ecranHyroxLibre(avecRetour) {
   const der = derniere(sug);
   return `<main class="ecran ${avecRetour ? '' : 'avec-nav'} theme-hyrox">
     <div class="entete">
-      ${avecRetour ? `<button class="btn-icone" data-action="onglet" data-id="hyrox" aria-label="Retour">${ICONES.retour}</button>` : ''}
+      ${avecRetour ? `<button class="btn-icone" data-action="onglet" data-id="hyrox" aria-label="Retour">${ICONES.retour}</button>` : pastille('hyrox')}
       <div><div class="sur-titre">Hyrox libre</div><h1>Choisis ta séance</h1></div>
       ${avecRetour ? '' : `<button class="btn-icone" data-action="hyrox-profil" aria-label="Profil Hyrox">${ICONES.reglages}</button>`}
     </div>

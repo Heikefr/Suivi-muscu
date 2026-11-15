@@ -59,3 +59,10 @@ export function mmss(s) {
   const t = Math.max(0, Math.round(s));
   return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
 }
+
+/** Date AAAA-MM-JJ décalée de `n` jours. */
+export function ajouterJours(iso, n) {
+  const [a, m, j] = iso.split('-').map(Number);
+  const t = new Date(a, m - 1, j + n);
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+}

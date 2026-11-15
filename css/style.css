@@ -384,7 +384,6 @@ button.conseillee { width: 100%; font-family: inherit; }
 /* ---------- 0.5 : réglages, échauffement, records, carte des muscles, sauvegarde ---------- */
 .note { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; min-height: 52px; }
 .texte-note { font-size: 15px; font-weight: 600; line-height: 1.35; white-space: pre-wrap; }
-.lien-note { align-self: flex-start; min-height: 32px; padding: 0; color: var(--doux); }
 .zone-texte { height: auto; padding: 12px 14px; line-height: 1.4; resize: none; font-family: inherit; }
 .chauffe { background: transparent; border: 1px dashed var(--gris); }
 .chauffe .passer { min-height: 0; padding: 0; color: var(--doux); }
@@ -412,7 +411,70 @@ button.conseillee { width: 100%; font-family: inherit; }
 .rappel-sauvegarde button { width: auto; height: 44px; padding: 0 14px; border-color: var(--accent); color: var(--accent); }
 
 /* ---------- Classes utilitaires ----------
-   Petits réglages ponctuels (espacement, taille de texte…) utilisés dans les écrans.
+   Petits réglages ponctuels (espacement, t
+/* ---------- 0.6 : accueil « Ma semaine », pastilles, exercice compact ---------- */
+.pastille {
+  width: 46px; height: 46px; flex-shrink: 0; border-radius: 13px;
+  background: var(--accent); color: var(--fond);
+  display: flex; align-items: center; justify-content: center;
+}
+.entete { align-items: center; }
+.entete > div { gap: 2px; }
+.semaine { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; }
+.semaine > div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.semaine .initiale { font-size: 12px; color: var(--doux); }
+.semaine .auj .initiale { color: var(--texte); font-weight: 700; }
+.rond-jour {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--carte); border: 2px solid transparent;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;
+}
+.semaine .auj .rond-jour { border-color: var(--texte); }
+.rond-jour.muscu { background: #E8FF47; color: #0E1013; font-weight: 700; }
+.rond-jour.hyrox { background: #5AC8FA; color: #0B1218; font-weight: 700; }
+.rond-jour.mixte { background: linear-gradient(135deg, #E8FF47 50%, #5AC8FA 50%); color: #0E1013; font-weight: 700; }
+.legende-semaine { display: flex; justify-content: flex-end; gap: 14px; margin-top: -6px; }
+.legende-semaine i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.legende-semaine .muscu { background: #E8FF47; }
+.legende-semaine .hyrox { background: #5AC8FA; }
+/* Les deux grandes cartes de l'accueil : jaune (muscu) et bleue (Hyrox). */
+.carte-seance { gap: 6px; padding: 16px; }
+.carte-seance .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.carte-seance .sous { font-size: 13px; font-weight: 500; line-height: 1.35; }
+.carte-seance .boutons { display: flex; gap: 8px; margin-top: 6px; }
+.carte-seance .boutons button {
+  flex: 1; height: 44px; padding: 0 6px; border-radius: 12px; border: 1.5px solid var(--fond);
+  background: transparent; color: var(--fond); font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+.carte-seance .boutons .plein { flex: 2; border: none; background: var(--fond); color: var(--texte); font-size: 14px; }
+.carte-hyrox { --accent: #5AC8FA; --fond: #0B1218; }
+/* Exercice : disposition compacte */
+.exo-tete { display: flex; align-items: center; gap: 12px; }
+.exo-tete .dessin { width: 84px; height: 84px; flex-shrink: 0; border-radius: 14px; background: var(--carte2); display: flex; align-items: center; justify-content: center; }
+.exo-tete .texte { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.exo-tete h1 { font-size: 22px; line-height: 1.15; }
+.exo-tete .petit { line-height: 1.35; }
+.lien-note { align-self: flex-start; min-height: 32px; padding: 0; color: var(--doux); text-align: left; font-size: 13px; }
+.lien-note.remplie { color: var(--accent); }
+.saisie { border: 2px solid var(--accent); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.saisie .trait { height: 1px; background: var(--bord); }
+.reglage { display: flex; align-items: center; gap: 10px; min-height: 56px; }
+.reglage button { width: 56px; height: 56px; flex-shrink: 0; border-radius: 16px; border: none; background: var(--carte2); font-size: 26px; font-weight: 600; }
+.reglage .centre { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.reglage .valeur { font-family: var(--titre); font-size: 40px; font-weight: 700; line-height: 1; }
+.reglage .valeur.petit-texte { font-size: 26px; }
+.reglage .petit { font-size: 12px; }
+.cases-series { display: grid; gap: 8px; text-align: center; }
+.cases-series > div { border: 1px solid var(--bord); border-radius: 12px; padding: 8px 2px; display: flex; flex-direction: column; gap: 2px; color: var(--doux); }
+.cases-series span { font-size: 12px; }
+.cases-series strong { font-size: 13px; font-weight: 600; }
+.cases-series .faite { background: var(--carte); border-color: var(--carte); }
+.cases-series .faite strong { color: var(--texte); font-weight: 700; }
+.cases-series .encours { border: 2px solid var(--accent); padding: 7px 1px; }
+.cases-series .encours span { color: var(--accent); font-weight: 700; }
+.cases-series .encours strong { color: var(--texte); }
+.liens-series { gap: 18px; }
+.liens-series button:disabled { opacity: .35; }
+aille de texte…) utilisés dans les écrans.
    Nom = u-<réglage>-<valeur>. Le !important garantit qu'elles passent après les règles du composant. */
 .u-aff-flex { display: flex !important; }
 .u-aligne-center { text-align: center !important; }

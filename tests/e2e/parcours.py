@@ -79,7 +79,7 @@ with sync_playwright() as p:
     photo(pg, 'accueil')
 
     # --- Composition d'une séance Push ---
-    pg.click('button.conseillee')
+    pg.click('.carte-seance .plein >> nth=0')
     pg.wait_for_selector('text=Composer ta séance')
     photo(pg, 'composer')
     pg.click('.case-choix >> nth=0')
@@ -96,7 +96,7 @@ with sync_playwright() as p:
     # --- Séance : exercice, options, récupération, fin ---
     pg.click('[data-action="go-compo"]')
     pg.wait_for_selector('text=Valider la série 1')
-    pg.click('text=+ Ajouter une série')
+    pg.click('[data-action="ajout-serie"]')
     photo(pg, 'exercice')
     # Réglages personnels et échauffement
     pg.click('[data-action="note"]')
@@ -125,7 +125,7 @@ with sync_playwright() as p:
     photo(pg, 'accueil-apres-seance')
 
     # --- Séance personnalisée avec haltérophilie ---
-    pg.click('text=Séance personnalisée')
+    pg.click('.carte-seance button:has-text("Perso")')
     pg.wait_for_selector('#recherche')
     photo(pg, 'perso')
     pg.fill('#recherche', 'arra')
@@ -173,7 +173,7 @@ with sync_playwright() as p:
     # --- Hyrox : libre, séance test, profil, plan ---
     pg.click('.nav >> text=Hyrox')
     photo(pg, 'hyrox-intro')
-    pg.click('text=Voir les séances Hyrox')
+    pg.click('text=Voir les séances Hyrox')  # depuis l'onglet Hyrox
     photo(pg, 'hyrox-libre')
     pg.click('button.choix:has-text("Force Hyrox")')
     photo(pg, 'hyrox-apercu')
