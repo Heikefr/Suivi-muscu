@@ -8,7 +8,8 @@ import { ICONES, nomExo } from '../commun.js';
 import { VERSION, d, enregistrer, remplacerDonnees, rendre, toast, ui } from '../etat.js';
 import { fusionner, importerCsv } from '../metier/import.js';
 import { valider, vide } from '../metier/stockage.js';
-import { aujourdhui, dateLongue, esc } from '../outils.js';
+import { CATEGORIES_RECUP, RECUP_MAX, RECUP_MIN, RECUP_PAS, recupCategorie } from '../metier/conseils.js';
+import { aujourdhui, dateLongue, esc, mmss } from '../outils.js';
 
 export function ecranReglages() {
   const nbS = d.historique.length;
@@ -26,6 +27,18 @@ export function ecranReglages() {
         <input type="file" class="cache" data-action="importer" accept=".csv,.json,text/csv,application/json,text/plain">
       </label>
       <div class="petit">Accepte une sauvegarde de l'appli (.json) ou ton ancien suivi Google Sheet exporté en CSV (onglet musculation).</div>
+    </div>
+    <div class="carte pile u-ecart-12">
+      <div class="u-gras-600">Temps de récup</div>
+      <div class="petit">La règle selon le type d'exercice. Tu peux aussi régler un exercice précis depuis son bouton « Options » pendant la séance.</div>
+      ${CATEGORIES_RECUP.map((c) => {
+    const v = recupCategorie(c.id, d.recupCat);
+    return `<div class="ligne-recup">
+        <span class="pile u-ecart-2 u-flex-1"><span class="u-gras-600 u-t-15">${esc(c.nom)}</span><span class="petit">${esc(c.exemple)}${v !== c.defaut ? ` · règle ${mmss(c.defaut)}` : ''}</span></span>
+        <div class="stepper"><button data-action="recup-cat" data-c="${c.id}" data-d="-1" aria-label="${esc(c.nom)} : plus court">−</button><div class="val">${mmss(v)}</div><button data-action="recup-cat" data-c="${c.id}" data-d="1" aria-label="${esc(c.nom)} : plus long">+</button></div>
+      </div>`;
+  }).join('')}
+      ${Object.keys(d.recupCat).length || Object.keys(d.recupExo).length ? `<button class="btn-lien" data-action="recup-defaut">Revenir à la règle partout${Object.keys(d.recupExo).length ? ` (dont ${Object.keys(d.recupExo).length} exercice${Object.keys(d.recupExo).length > 1 ? 's' : ''} réglé${Object.keys(d.recupExo).length > 1 ? 's' : ''} à part)` : ''}</button>` : ''}
     </div>
     <div class="carte pile">
       <div class="u-gras-600">Rappel de sauvegarde</div>
@@ -89,6 +102,15 @@ export const actions = {
     return false;
   },
   rappel(el) { d.sauvegarde.rappel = Number(el.dataset.j); enregistrer(); },
+  'recup-cat'(el) {
+    const c = el.dataset.c;
+    const v = recupCategorie(c, d.recupCat) + Number(el.dataset.d) * RECUP_PAS;
+    d.recupCat[c] = Math.min(RECUP_MAX, Math.max(RECUP_MIN, v));
+    // Revenir pile sur la règle : on efface le réglage.
+    if (d.recupCat[c] === CATEGORIES_RECUP.find((x) => x.id === c).defaut) delete d.recupCat[c];
+    enregistrer();
+  },
+  'recup-defaut'() { d.recupCat = {}; d.recupExo = {}; enregistrer(); toast('Temps de récup remis à la règle'); },
   async exporter() {
     // La sauvegarde est notée comme faite seulement si elle aboutit (pas si le partage est annulé).
     const noter = () => { d.sauvegarde.derniere = aujourdhui(); enregistrer(); rendre(); toast('Sauvegarde faite'); };

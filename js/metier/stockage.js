@@ -10,6 +10,9 @@ export function vide() {
     hyroxProfil: null, hyroxAjust: {}, enCoursHyrox: null,
     // notes : réglages personnels par exercice ; sauvegarde : date de la dernière et fréquence du rappel (jours, 0 = jamais)
     notes: {}, sauvegarde: { derniere: null, rappel: 7 },
+    // alertes : douleur ou gêne signalée par exercice { date, zone, note } ;
+    // recupCat / recupExo : temps de récup choisis par catégorie / par exercice (secondes).
+    alertes: {}, recupCat: {}, recupExo: {},
   };
 }
 
@@ -29,6 +32,9 @@ export function valider(d) {
     hyroxProfil: d.hyroxProfil && typeof d.hyroxProfil === 'object' ? d.hyroxProfil : null,
     hyroxAjust: objet(d.hyroxAjust),
     notes: objet(d.notes),
+    alertes: objet(d.alertes),
+    recupCat: objet(d.recupCat),
+    recupExo: objet(d.recupExo),
     sauvegarde: { derniere: null, rappel: 7, ...objet(d.sauvegarde) },
   };
 }

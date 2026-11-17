@@ -519,6 +519,11 @@ schema('squat-smith', () => {
   return bati([s.barre[0], 8], [s.barre[0], SOL]) + s.svg;
 });
 schema('squat-avant', () => squat(true, ['quadriceps', 'abdos']).svg);
+/** Squat au poids du corps (échauffement) : bras tendus devant, sans charge. */
+schema('squat-pdc', () => {
+  const P = pose({ h: [58, 0], torse: -66, cuisse: 16, tibia: 106, bras: -6, avant: -6, auSol: true });
+  return sol + profil(P, { muscles: ['quadriceps', 'fessiers'] }) + fleche([128, 60], [128, 100], true);
+});
 schema('hack-squat', () => {
   const P = pose({ h: [56, 108], torse: -118, cuisse: 14, tibia: 118, bras: 60, avant: -110 });
   return sol + coussin(vers(vers(P.h, -118, -4), 152, 13), vers(vers(P.e, -118, 12), 152, 13)) + bati([14, 40], [14, SOL]) + bati([14, SOL - 2], [96, SOL - 2])

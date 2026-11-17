@@ -21,7 +21,7 @@ import {
   actions as actionsProgression, ecranDetail, ecranExercices, ecranProgression, ecranRecords,
 } from './ecrans/progression.js';
 import { actions as actionsReglages, ecranReglages, importerFichier } from './ecrans/reglages.js';
-import { actions as actionsSeance, ecranExercice, ecranFin, ecranRecup, tic } from './ecrans/seance.js';
+import { actions as actionsSeance, ecranExercice, ecranFin, ecranMaSeance, ecranRecup, tic } from './ecrans/seance.js';
 import { d, definirRendu, ui } from './etat.js';
 import { modalHtml } from './fenetres.js';
 import { exo } from './metier/donnees.js';
@@ -37,6 +37,7 @@ function rendre() {
   let html;
   if (ui.ecran === 'exercice' && d.enCours) html = ecranExercice();
   else if (ui.ecran === 'recup' && d.enCours?.recup) html = ecranRecup();
+  else if (ui.ecran === 'ma-seance' && d.enCours) html = ecranMaSeance();
   else if (ui.ecran === 'composer' && ui.compo) html = ecranComposer();
   else if (ui.ecran === 'perso' && ui.perso) html = ecranPerso();
   else if (ui.ecran === 'fin') html = ecranFin();
@@ -61,6 +62,10 @@ function rendre() {
   if (ui.ecran === 'hyrox-seance') ticHyrox();
 }
 definirRendu(rendre);
+
+// Fait avancer les minuteurs (récup et Hyrox) 4 fois par seconde. Indispensable : sans cette ligne,
+// l'affichage ne bougeait qu'à chaque toucher (bug de la 0.4 à la 0.6, testé par tests/e2e/minuteur.py).
+setInterval(() => { tic(); ticHyrox(); }, 250);
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {

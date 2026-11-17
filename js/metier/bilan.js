@@ -1,6 +1,6 @@
 // =====================================================================
-// Bilans tirés de l'historique : muscles de la semaine, records,
-// séries d'échauffement et rappel de sauvegarde.
+// Bilans tirés de l'historique : muscles de la semaine, records
+// et rappel de sauvegarde.
 // ---------------------------------------------------------------------
 // Fonctions pures (aucun affichage) : testées par tests/bilan.test.js.
 // =====================================================================
@@ -119,29 +119,6 @@ export function nouveauxRecords(historiqueAvant, seance) {
     if (top && avant[e.exo] && bat(top, avant[e.exo])) liste.push({ exo: e.exo, nom: e.nom, ...top, avant: avant[e.exo] });
   }
   return liste;
-}
-
-// ---------- Échauffement ----------
-
-/** Les séries de chauffe : part de la charge du jour, et répétitions. */
-const CHAUFFE = [[0.4, 10], [0.6, 6], [0.8, 3]];
-
-/**
- * Séries d'échauffement avant la première série lourde.
- * Arrondies au pas de l'exercice ; à la barre, jamais moins que la barre vide (20 kg).
- * Renvoie [] quand il n'y a rien d'utile à proposer (poids du corps, charge inconnue ou trop légère).
- */
-export function echauffement(charge, def) {
-  if (!def || def.poidsDuCorps || def.type === 'haltero' || !(charge > 0)) return [];
-  const pas = def.increment || 2.5;
-  const mini = def.materiel === 'barre' ? 20 : pas;
-  const series = [];
-  for (const [part, reps] of CHAUFFE) {
-    const kg = Math.max(mini, Math.round((charge * part) / pas) * pas);
-    // On garde seulement des paliers qui montent et restent sous la charge de travail.
-    if (kg < charge && (!series.length || kg > series[series.length - 1].charge)) series.push({ charge: kg, reps });
-  }
-  return series;
 }
 
 // ---------- Rappel de sauvegarde ----------

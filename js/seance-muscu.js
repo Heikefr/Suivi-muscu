@@ -7,6 +7,7 @@
 // =====================================================================
 
 import { nouveauxRecords } from './metier/bilan.js';
+import { dureeRecup, echauffementPour } from './metier/conseils.js';
 import { estHaltero, nomExo } from './commun.js';
 import { d, enregistrer, rendre, ui } from './etat.js';
 import { cibleFinale, exo, seance } from './metier/donnees.js';
@@ -55,8 +56,9 @@ export function demarrer(seanceId, nom, items) {
   if (!items.length) return;
   d.enCours = {
     seance: seanceId, nom, debut: Date.now(), index: 0, recup: null,
-    // Échauffement proposé avant la toute première série : nombre de séries de chauffe faites.
-    chauffe: { faites: 0, finie: false },
+    // Échauffement : un exercice léger à part, adapté à la séance (voir ECHAUFFEMENTS).
+    // type = clé de ECHAUFFEMENTS, faites = séries de chauffe faites, finie = fait ou passé.
+    chauffe: { type: echauffementPour(seanceId, items.map((it) => exo(it.exo)?.famille)), faites: 0, finie: false },
     exercices: items.map(preparerExo),
   };
   enregistrer();
@@ -103,16 +105,37 @@ export function validerSerie(reps) {
   if (d.enCours.chauffe) d.enCours.chauffe.finie = true; // une vraie série est faite : plus d'échauffement
   const exoIndex = d.enCours.index;
   const serieIndex = e.series.length - 1;
+  // Dernière série de l'exercice : on passe au suivant. S'il n'y en a plus, la récup
+  // proposera d'ajouter un exercice ou de terminer (finSeance).
+  let finSeance = false;
   if (e.series.length >= e.cible.series) {
     const suivant = prochainIndex(d.enCours.index);
-    if (suivant < 0) { terminer(); return; }
-    d.enCours.index = suivant;
+    if (suivant < 0) finSeance = true;
+    else d.enCours.index = suivant;
   }
-  d.enCours.recup = { fin: Date.now() + e.cible.recup * 1000, duree: e.cible.recup, exoIndex, serieIndex, flashe: false };
+  const duree = dureeRecup(def, d);
+  d.enCours.recup = { fin: Date.now() + duree * 1000, duree, exoIndex, serieIndex, flashe: false, finSeance };
   enregistrer();
   ui.ecran = 'recup';
   rendre();
   window.scrollTo(0, 0);
+}
+
+/** Choisit l'exercice à faire ensuite (écran « Ma séance ») ; la récup en cours continue. */
+export function allerExo(i) {
+  const ec = d.enCours;
+  if (!ec.exercices[i] || ec.exercices[i].series.length >= ec.exercices[i].cible.series) return;
+  ec.index = i;
+  if (ec.recup) ec.recup.finSeance = false;
+  enregistrer();
+}
+
+/** Ajoute un exercice à la séance en cours et le met en suivant. */
+export function ajouterExo(id) {
+  const def = exo(id);
+  const ec = d.enCours;
+  ec.exercices.push(preparerExo({ exo: id, cible: def.cible }));
+  allerExo(ec.exercices.length - 1);
 }
 
 /** Fin de la récupération : retour à l'écran de l'exercice. */

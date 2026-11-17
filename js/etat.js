@@ -11,7 +11,7 @@
 
 import { charger, sauver } from './metier/stockage.js';
 
-export const VERSION = '0.6';
+export const VERSION = '0.7';
 
 /** Les données enregistrées. `let` exporté : les autres fichiers voient toujours la valeur à jour. */
 export let d = charger();

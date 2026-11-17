@@ -43,12 +43,18 @@ def finir_seance(pg):
     for _ in range(120):
         if pg.locator('text=Séance terminée').count():
             return
+        if pg.locator('[data-action="terminer-seance"]').count():
+            pg.click('[data-action="terminer-seance"]')
+            continue
+        if pg.locator('[data-action="chauffe-passer"]').count():
+            pg.click('[data-action="chauffe-passer"]')
+            continue
         if pg.locator('.feuille').count():
             for _ in range(4):
                 pg.click('.feuille [aria-label="Plus lourd"]')
             pg.click('.feuille >> text=OK')
         elif pg.locator('#temps').count():
-            pg.click('button.btn-secondaire:has-text("Passer")')
+            pg.click('[data-action="fin-recup"]')
         elif pg.locator('.choix-reps').count():
             pg.click('.choix-reps button.on')
         else:
@@ -82,40 +88,55 @@ with sync_playwright() as p:
     pg.click('.carte-seance .plein >> nth=0')
     pg.wait_for_selector('text=Composer ta séance')
     photo(pg, 'composer')
-    pg.click('.case-choix >> nth=0')
+    pg.click('.tuile-compo .tuile >> nth=0')
     pg.wait_for_selector('.feuille')
     photo(pg, 'composer-choix')
     pg.click('.feuille button.choix >> nth=1')
     pg.click('text=Comme la dernière fois')
     pg.click('text=Suggestion')
     pg.click('[data-action="retirer"] >> nth=3')
-    pg.click('text=+ Ajouter un exercice')
+    pg.click('.tuile.ajout')
     pg.click('.feuille button.choix:has-text("Dips")')
     photo(pg, 'composer-modifie')
 
     # --- Séance : exercice, options, récupération, fin ---
     pg.click('[data-action="go-compo"]')
+    # Échauffement : un exercice à part, puis le premier exercice
+    pg.wait_for_selector('[data-action="chauffe-ok"]')
+    photo(pg, 'echauffement')
+    pg.click('[data-action="chauffe-ok"]')
+    pg.click('[data-action="chauffe-ok"]')
     pg.wait_for_selector('text=Valider la série 1')
     pg.click('[data-action="ajout-serie"]')
     photo(pg, 'exercice')
-    # Réglages personnels et échauffement
+    # Réglages personnels
     pg.click('[data-action="note"]')
     pg.fill('#note-texte', 'Banc n°3, prise aux anneaux')
     photo(pg, 'note-saisie')
     pg.click('[data-action="note-ok"]')
-    if pg.locator('[data-action="chauffe-ok"]').count():
-        pg.click('[data-action="chauffe-ok"]')
-        photo(pg, 'echauffement')
-        pg.click('[data-action="chauffe-passer"]')
     photo(pg, 'exercice-avec-note')
     pg.click('[data-action="options"]')
     photo(pg, 'exercice-options')
     pg.click('.feuille [aria-label="Plus lourd"]')
+    pg.click('.feuille [aria-label="Récup plus longue"]')
+    photo(pg, 'exercice-options-recup')
     pg.click('.feuille >> text=OK')
     pg.click('[data-action="valider"]')
     pg.wait_for_selector('#temps')
     photo(pg, 'recup')
-    pg.click('button.btn-secondaire:has-text("Passer")')
+    # Signaler une gêne
+    pg.click('[data-action="gene"]')
+    pg.click('.feuille .puce:has-text("Épaule")')
+    pg.fill('#gene-note', 'Pincement en bas du mouvement')
+    photo(pg, 'gene')
+    pg.click('[data-action="gene-ok"]')
+    # Ma séance (tuiles) depuis la récup, puis choisir un autre exercice
+    pg.click('[data-action="ma-seance"]')
+    photo(pg, 'ma-seance')
+    pg.click('.tuile[data-i="2"]')
+    photo(pg, 'recup-autre-exercice')
+    pg.click('[data-action="fin-recup"]')
+    photo(pg, 'exercice-choisi')
     pg.click('[aria-label="Quitter la séance"]')
     photo(pg, 'quitter')
     pg.click('text=Continuer la séance')
@@ -141,6 +162,7 @@ with sync_playwright() as p:
     photo(pg, 'perso-nom')
     pg.click('[data-action="enregistrer-ok"]')
     pg.click('[data-action="go-perso"]')
+    pg.click('[data-action="chauffe-passer"]')
     pg.wait_for_selector('.choix-reps')
     photo(pg, 'haltero-sans-record')
     pg.click('.choix-reps button.on')

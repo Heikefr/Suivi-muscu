@@ -19,31 +19,33 @@ export function ecranComposer() {
   const c = ui.compo;
   const s = seance(c.seance);
   const puce = (m, t) => `<button class="puce ${c.mode === m ? 'on' : ''}" data-action="mode" data-id="${m}" aria-pressed="${c.mode === m}">${t}</button>`;
+  // Une tuile par exercice prévu : on voit toute la séance d'un coup.
   const items = c.cases.map((k, i) => {
     const def = exo(k.exo);
     const cible = cibleFinale(def, k.cible);
-    return `<div class="case-seance">
-      <span class="mini-dessin">${illustration(def.dessin, def.nom, 40)}</span>
-      <button class="case-choix" data-action="choix" data-i="${i}">
-        <span class="label petit u-t-11">${esc(k.role)}</span>
-        <span class="nom-case">${esc(def.nom)} ${ICONES.chevron}</span>
+    return `<div class="tuile-compo">
+      <button class="tuile" data-action="choix" data-i="${i}" aria-label="${esc(k.role)} : ${esc(def.nom)}, toucher pour changer">
+        <span class="badge">${esc(k.role)}</span>
+        <span class="dessin-tuile">${illustration(def.dessin, def.nom, 72)}</span>
+        <span class="nom">${esc(def.nom)}</span>
         <span class="petit">${cibleTexte(cible, def)} · ${esc(infoExo(k.exo))}</span>
         ${k.raison ? `<span class="raison">${esc(k.raison)}</span>` : ''}
+        ${d.alertes[def.id] ? '<span class="gene-tuile">Gêne signalée</span>' : ''}
       </button>
       <button class="btn-retirer" data-action="retirer" data-i="${i}" aria-label="Retirer ${esc(def.nom)}">${ICONES.croix}</button>
     </div>`;
   }).join('');
-  const liste = c.cases.map((k) => ({ cible: cibleFinale(exo(k.exo), k.cible) }));
+  const liste = c.cases.map((k) => ({ exo: k.exo, cible: cibleFinale(exo(k.exo), k.cible) }));
   return `<main class="ecran">
     <div class="ligne">
       <button class="btn-icone" data-action="onglet" data-id="seances" aria-label="Retour">${ICONES.retour}</button>
       <div class="pile u-flex-1 u-ecart-2"><div class="sur-titre">Composer ta séance</div><h1 class="u-t-26">${esc(s.nom)}</h1></div>
     </div>
     <div class="puces">${puce('suggestion', 'Suggestion')}${puce('derniere', 'Comme la dernière fois')}${puce('courte', 'Courte')}</div>
-    <div class="petit">Touche un exercice pour le changer.</div>
-    <div class="pile u-ecart-8">
-      ${items || '<div class="carte petit">Aucun exercice : ajoute-en un.</div>'}
-      <button class="btn-ajout" data-action="choix" data-i="-1">+ Ajouter un exercice</button>
+    <div class="petit">Touche une tuile pour changer l'exercice. Tu pourras revenir à cette vue pendant la séance.</div>
+    <div class="tuiles">
+      ${items}
+      <button class="tuile ajout" data-action="choix" data-i="-1"><span class="carre-plus">${ICONES.plus}</span><span class="nom">Ajouter un exercice</span></button>
     </div>
     <div class="pousse"></div>
     <div class="barre-action">

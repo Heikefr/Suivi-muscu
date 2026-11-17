@@ -39,7 +39,7 @@ Pas d'outil de construction : du HTML, du CSS et du JavaScript en modules, lus t
 | `js/carte-muscles.js` | Silhouettes face et dos de la carte des muscles travaillés |
 | `js/illustrations.js` | Schémas des exercices, dessinés par du code (muscle travaillé en rouge) |
 | `js/ecrans/` | Un fichier par écran (l'accueil « Ma semaine » est dans `accueil.js`) ou groupe d'écrans, avec les actions de ses boutons |
-| `js/metier/` | Calculs sans affichage, couverts par les tests : catalogue, progression, bilans (muscles, records, échauffement, sauvegarde), Hyrox, import, stockage |
+| `js/metier/` | Calculs sans affichage, couverts par les tests : catalogue, progression, bilans (muscles, records, sauvegarde), règles de récup, erreurs à éviter et échauffements (`conseils.js`), Hyrox, import, stockage |
 | `css/style.css` | Thèmes, composants, puis classes utilitaires (`u-…`) |
 | `tests/*.test.js` | Tests des calculs : `npm test` |
-| `tests/e2e/` | Parcours complet dans un iPhone simulé, pour comparer deux versions |
+| `tests/e2e/` | Parcours complet dans un iPhone simulé (`parcours.py`, pour comparer deux versions) et test des minuteurs avec la vraie horloge (`minuteur.py`) |

@@ -4,17 +4,17 @@
 // Exercice (musculation ou haltérophilie), récupération avec minuteur, écran de fin.
 // =====================================================================
 
-import { ICONES, chargeTexte, estHaltero, nomExo, repsTexte } from '../commun.js';
+import { ICONES, chargeTexte, cibleTexte, estHaltero, nomExo, repsTexte } from '../commun.js';
 import { ecranAccueil } from './accueil.js';
 import { d, enregistrer, rendre, toast, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
-import { exo, seance } from '../metier/donnees.js';
-import { echauffement } from '../metier/bilan.js';
+import { EXERCICES, exo, seance } from '../metier/donnees.js';
+import { ECHAUFFEMENTS, RECUP_MAX, RECUP_MIN, RECUP_PAS, dureeRecup, erreurAEviter } from '../metier/conseils.js';
 import { chargeDe } from '../metier/progression.js';
-import { dateLongue, esc, mmss, nb } from '../outils.js';
+import { aujourdhui, dateLongue, esc, ilYa, mmss, nb } from '../outils.js';
 import {
-  chargeSerie, exoCourant, finRecup, garderEcranAllume, libererEcran, preparerExo, prochainIndex, recalculerPlan,
-  terminer, validerSerie,
+  ajouterExo, allerExo, chargeSerie, exoCourant, finRecup, garderEcranAllume, libererEcran, preparerExo, prochainIndex,
+  recalculerPlan, terminer, validerSerie,
 } from '../seance-muscu.js';
 
 /** Haut de l'écran : bouton quitter, nom de la séance, avancement. */
@@ -27,6 +27,7 @@ function enteteSeance(theme) {
         <div class="sur-titre">${esc(ec.nom || seance(ec.seance)?.nom)} · exercice ${ec.index + 1} sur ${ec.exercices.length}</div>
         <div class="barres" style="grid-template-columns:repeat(${ec.exercices.length},minmax(0,1fr))">${barres}</div>
       </div>
+      <button class="btn-icone" data-action="ma-seance" aria-label="Ma séance : tous les exercices">${ICONES.tuiles}</button>
     </div>`;
 }
 
@@ -41,24 +42,64 @@ function blocNote(def) {
   return `<button class="btn-lien lien-note ${note ? 'remplie' : ''}" data-action="note" data-id="${def.id}">${note ? `Mes réglages : ${esc(note)}` : '+ Ajouter mes réglages (siège, prise…)'}</button>`;
 }
 
-/**
- * Carte d'échauffement : seulement avant la toute première série de la séance.
- * Les séries de chauffe ne sont pas enregistrées dans l'historique.
- */
-function blocChauffe(e, def) {
-  const ec = d.enCours;
-  if (!ec.chauffe || ec.chauffe.finie || ec.index !== 0 || e.series.length) return '';
-  const series = echauffement(e.charge, def);
-  const n = ec.chauffe.faites;
-  if (!series.length || n >= series.length) return '';
-  return `<div class="carte chauffe pile u-ecart-10">
-    <div class="ligne"><div class="u-flex-1 u-gras-600">Échauffement <span class="petit">· avant ${nb(e.charge)} kg</span></div>
-      <button class="btn-lien passer" data-action="chauffe-passer">Passer</button></div>
-    <div class="paliers" style="grid-template-columns:repeat(${series.length},minmax(0,1fr))">
-      ${series.map((x, i) => `<div class="${i < n ? 'fait' : i === n ? 'encours' : ''}"><strong>${i < n ? '✓ ' : ''}${nb(x.charge)} kg</strong><span class="petit">${x.reps} reps</span></div>`).join('')}
+/** Rappel d'une douleur ou gêne signalée la dernière fois sur cet exercice (« prévenir seulement »). */
+function blocAlerte(def) {
+  const a = d.alertes[def.id];
+  if (!a) return '';
+  return `<div class="alerte">
+    <div class="u-flex-1 pile u-ecart-2">
+      <strong>Gêne ${a.zone ? `${esc(LIBELLES_ZONE[a.zone] || a.zone)} ` : ''}signalée ${ilYa(a.date)}</strong>
+      ${a.note ? `<span>${esc(a.note)}</span>` : ''}
+      <span class="petit">Écoute ton corps : allège ou remplace l'exercice si ça revient.</span>
     </div>
-    <button class="btn-secondaire" data-action="chauffe-ok">Chauffe ${n + 1} faite</button>
+    <button class="btn-lien" data-action="alerte-ok" data-id="${def.id}">C'est passé</button>
   </div>`;
+}
+
+/** Zones proposées quand on signale une gêne, et leur libellé dans le rappel (« gêne au coude »). */
+export const ZONES = [['epaule', 'Épaule'], ['coude', 'Coude'], ['poignet', 'Poignet'], ['dos', 'Dos'], ['hanche', 'Hanche'], ['genou', 'Genou'], ['cheville', 'Cheville'], ['autre', 'Autre']];
+const LIBELLES_ZONE = {
+  epaule: "à l'épaule", coude: 'au coude', poignet: 'au poignet', dos: 'au dos', hanche: 'à la hanche', genou: 'au genou', cheville: 'à la cheville', autre: '',
+};
+
+/** Vrai tant que l'échauffement de la séance n'est ni fait ni passé (seulement avant la toute première série). */
+function chauffeAFaire() {
+  const ec = d.enCours;
+  const c = ec.chauffe;
+  // Une séance commencée avant la version 0.7 n'a pas de type d'échauffement.
+  return Boolean(c && c.type && !c.finie && ec.exercices.every((x) => !x.series.length));
+}
+
+/** Écran d'échauffement : un exercice léger à part, 2 séries faciles, non enregistrées. */
+function ecranEchauffement() {
+  const ec = d.enCours;
+  const ch = ECHAUFFEMENTS[ec.chauffe.type];
+  const n = ec.chauffe.faites;
+  const premier = exo(exoCourant().exo);
+  const cases = Array.from({ length: ch.series }, (_, i) => (i < n
+    ? `<div class="faite"><span>Série ${i + 1}</span><strong>faite</strong></div>`
+    : `<div class="${i === n ? 'encours' : ''}"><span>Série ${i + 1}</span><strong>${i === n ? 'en cours' : 'à venir'}</strong></div>`)).join('');
+  return `<main class="ecran">
+    ${enteteSeance()}
+    <div class="sur-titre u-c-accent">Échauffement · facultatif</div>
+    <div class="exo-tete">
+      <div class="dessin">${illustration(ch.dessin, ch.nom, 78)}</div>
+      <div class="texte"><h1>${esc(ch.nom)}</h1><div class="petit">${esc(ch.pourquoi)}. Ne compte pas dans ta progression.</div></div>
+    </div>
+    <div class="carte saisie">
+      <div class="u-gras-700">Série ${Math.min(n + 1, ch.series)} sur ${ch.series}</div>
+      <div class="u-t-20 u-gras-600">${esc(ch.consigne)}</div>
+      <div class="petit">Sans forcer : tu dois finir en ayant chaud, pas fatigué.</div>
+    </div>
+    <div class="cases-series" style="grid-template-columns:repeat(${ch.series},minmax(0,1fr))">${cases}</div>
+    <div class="pousse"></div>
+    <div class="carte ligne u-ecart-12"><span class="mini-dessin">${illustration(premier.dessin, premier.nom, 40)}</span>
+      <span class="pile u-ecart-2 u-flex-1"><span class="petit">Ensuite</span><span class="u-gras-600">${esc(premier.nom)}</span></span></div>
+    <div class="pile u-ecart-6">
+      <button class="btn-principal" data-action="chauffe-ok">Série ${n + 1} faite</button>
+      <button class="btn-lien" data-action="chauffe-passer">Passer l'échauffement</button>
+    </div>
+  </main>`;
 }
 
 /**
@@ -69,6 +110,7 @@ function blocChauffe(e, def) {
 export function ecranExercice() {
   const e = exoCourant();
   const def = exo(e.exo);
+  if (chauffeAFaire()) return ecranEchauffement();
   if (estHaltero(def)) return ecranHaltero(e, def);
   const fait = e.series.length;
   const total = e.cible.series;
@@ -105,7 +147,7 @@ export function ecranExercice() {
         ${blocNote(def)}
       </div>
     </div>
-    ${blocChauffe(e, def)}
+    ${blocAlerte(def)}
     <div class="carte saisie">
       <div class="ligne"><div class="u-flex-1 u-gras-700">Série ${fait + 1} sur ${total}</div>
         <div class="petit">Objectif ${e.cible.repsMin} à ${e.cible.repsMax} ${def.unite === 's' ? 's' : 'reps'}</div></div>
@@ -125,7 +167,7 @@ export function ecranExercice() {
         <button class="btn-lien" data-action="retrait-serie" aria-label="Retirer une série" ${total > Math.max(1, fait + 1) ? '' : 'disabled'}>− Série</button>
         <button class="btn-lien" data-action="ajout-serie" aria-label="Ajouter une série">+ Série</button>
         <span class="u-flex-1"></span>
-        <button class="btn-lien" data-action="options">Remplacer · passer</button>
+        <button class="btn-lien" data-action="options">Options</button>
       </div>
     </div>
   </main>`;
@@ -149,6 +191,7 @@ function ecranHaltero(e, def) {
     ${enteteSeance()}
     <h1>${esc(def.nom)}</h1>
     ${blocNote(def)}
+    ${blocAlerte(def)}
     <div class="carte pile u-ecart-12 u-pad-16 u-rayon-18">
       <div class="ligne u-items-flex-end">
         <div class="pile u-flex-1 u-ecart-4">
@@ -179,21 +222,82 @@ function ecranHaltero(e, def) {
   </main>`;
 }
 
-/** Écran de récupération : minuteur, ressenti de la série, aperçu de la suite. */
+/** Résumé d'une série prévue : « Série 2 sur 4 · 60 kg · 8 à 10 reps ». */
+function texteSerieSuivante(e, def) {
+  const charge = chargeSerie(e, e.series.length);
+  const obj = e.cible.repsMin === e.cible.repsMax ? e.cible.repsMin : `${e.cible.repsMin} à ${e.cible.repsMax}`;
+  return `Série ${e.series.length + 1} sur ${e.cible.series}${def.poidsDuCorps ? '' : ` · ${chargeTexte(charge, def)}`} · ${obj} ${def.unite === 's' ? 's' : 'reps'}`;
+}
+
+/**
+ * Exercices à proposer quand tout est fait : même famille que la séance, pas encore faits,
+ * et de préférence d'un groupe musculaire qui n'a pas encore travaillé.
+ */
+function suggestionsFin() {
+  const ec = d.enCours;
+  const dans = ec.exercices.map((x) => x.exo);
+  const groupes = new Set(dans.map((id) => exo(id)?.groupe));
+  const familles = new Set(dans.map((id) => exo(id)?.famille));
+  return EXERCICES
+    .filter((x) => familles.has(x.famille) && !dans.includes(x.id) && !d.exclus.includes(x.id) && x.type !== 'haltero')
+    .sort((a, b) => (groupes.has(a.groupe) ? 1 : 0) - (groupes.has(b.groupe) ? 1 : 0))
+    .slice(0, 3);
+}
+
+/** Écran de récupération : minuteur, ressenti, conseils, et la suite de la séance. */
 export function ecranRecup() {
   const ec = d.enCours;
   const r = ec.recup;
   const exoFait = ec.exercices[r.exoIndex];
+  const defFait = exo(exoFait.exo);
   const derSerie = exoFait.series[r.serieIndex];
   const e = exoCourant();
   const def = exo(e.exo);
-  const theme = estHaltero(exo(exoFait.exo)) ? 'theme-haltero' : '';
+  const theme = estHaltero(defFait) ? 'theme-haltero' : '';
   const btnR = (v, t) => `<button data-action="ressenti" data-v="${v}" class="${derSerie?.ressenti === v ? 'on' : ''}" aria-pressed="${derSerie?.ressenti === v}">${t}</button>`;
-  const prochaineCharge = chargeSerie(e, e.series.length);
-  return `<main class="ecran ${theme}" style="gap:22px">
-    <div class="pile u-ecart-6 u-aligne-center">
-      <div class="sur-titre">${esc(nomExo(exoFait.exo))} · série ${r.serieIndex + 1} validée</div>
-      <h1 class="u-t-28" id="recup-titre">Récupération</h1>
+  const exoTermine = exoFait.series.length >= exoFait.cible.series;
+  const alerte = d.alertes[defFait.id];
+  const geneDuJour = alerte && alerte.date === aujourdhui();
+
+  // Conseils : ceux de l'exercice de la prochaine série (le même, sauf après sa dernière série).
+  const defConseil = r.finSeance ? defFait : def;
+  const conseils = `<div class="carte pile u-ecart-8">
+    <div class="sur-titre">Conseils · ${esc(defConseil.nom)}</div>
+    <div class="u-t-15 u-interligne-1-45">${esc(defConseil.conseil)}</div>
+    ${erreurAEviter(defConseil.id) ? `<div class="a-eviter"><strong>À éviter :</strong> ${esc(erreurAEviter(defConseil.id))}</div>` : ''}
+  </div>`;
+
+  // La suite : aperçu de la prochaine série, ou choix du prochain exercice, ou fin de séance.
+  let suite;
+  if (r.finSeance) {
+    const sug = suggestionsFin();
+    suite = `<div class="carte pile u-ecart-10">
+      <div class="u-gras-700 u-t-16">Tous les exercices prévus sont faits</div>
+      ${sug.length ? `<div class="petit">Tu as encore de l'énergie ? Enchaîne avec :</div>
+      ${sug.map((x) => `<button class="choix" data-action="ajouter-seance" data-id="${x.id}" style="min-height:56px">
+        <span class="mini-dessin">${illustration(x.dessin, x.nom, 40)}</span>
+        <span><span class="nom u-t-15">${esc(x.nom)}</span><span class="petit">${esc(x.muscles)}</span></span>${ICONES.plus}</button>`).join('')}` : ''}
+      <button class="btn-lien" data-action="ajout-seance">Choisir dans tous les exercices</button>
+    </div>
+    <button class="btn-principal" data-action="terminer-seance">Terminer la séance</button>`;
+  } else {
+    suite = `<div class="carte ligne u-ecart-12 suite">
+      <span class="mini-dessin">${illustration(def.dessin, def.nom, 40)}</span>
+      <span class="pile u-ecart-2 u-flex-1">
+        <span class="petit">${exoTermine ? 'Exercice suivant' : 'Ensuite'}</span>
+        <span class="u-gras-600">${e === exoFait ? '' : `${esc(def.nom)} · `}${esc(texteSerieSuivante(e, def))}</span>
+      </span>
+    </div>
+    ${exoTermine ? '<button class="btn-secondaire" data-action="ma-seance">Choisir un autre exercice</button>' : ''}`;
+  }
+
+  return `<main class="ecran ${theme}" style="gap:18px">
+    <div class="ligne">
+      <div class="pile u-ecart-6 u-flex-1">
+        <div class="sur-titre">${esc(nomExo(exoFait.exo))} · série ${r.serieIndex + 1} validée</div>
+        <h1 class="u-t-28" id="recup-titre">Récupération</h1>
+      </div>
+      <button class="btn-icone" data-action="ma-seance" aria-label="Ma séance : tous les exercices">${ICONES.tuiles}</button>
     </div>
     <div class="minuteur">
       <svg aria-hidden="true" width="240" height="240" viewBox="0 0 240 240" fill="none">
@@ -208,22 +312,48 @@ export function ecranRecup() {
     <div class="grille3">
       <button class="btn-secondaire" data-action="ajuster" data-d="-15">− 15 s</button>
       <button class="btn-secondaire" data-action="ajuster" data-d="15">+ 15 s</button>
-      <button class="btn-secondaire" data-action="fin-recup">Passer</button>
+      ${r.finSeance ? '<span></span>' : '<button class="btn-secondaire" data-action="fin-recup">Passer la récup</button>'}
     </div>
     <div class="carte pile u-ecart-12 u-pad-16">
       <div class="u-t-15 u-gras-600">Comment était cette série&nbsp;?</div>
       <div class="grille3 choix-ressenti u-ecart-8">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
       <div class="petit">Facultatif. Sert à ajuster le poids conseillé de la prochaine séance.</div>
+      <button class="btn-lien lien-gene ${geneDuJour ? 'notee' : ''}" data-action="gene" data-id="${defFait.id}">${geneDuJour ? `Gêne notée ${esc(LIBELLES_ZONE[alerte.zone] || '')} · modifier` : 'Signaler une douleur ou une gêne'}</button>
     </div>
-    <div class="pousse"></div>
-    <button class="choix u-fond-transparent" data-action="fin-recup">
-      <span>
-        <span class="label petit u-c-doux">Ensuite</span>
-        <span class="nom">${e === exoFait ? '' : esc(def.nom) + ' · '}Série ${e.series.length + 1} sur ${e.cible.series}${def.poidsDuCorps ? '' : ` · ${chargeTexte(prochaineCharge, def)}`}</span>
-        <span class="petit">Objectif ${e.cible.repsMin === e.cible.repsMax ? e.cible.repsMin : `${e.cible.repsMin} à ${e.cible.repsMax}`} ${def.unite === 's' ? 'secondes' : 'reps'}</span>
-      </span>
-      ${ICONES.suite}
-    </button>
+    ${suite}
+    ${conseils}
+  </main>`;
+}
+
+/** Écran « Ma séance » : une tuile par exercice prévu, pour voir toute la séance et choisir le suivant. */
+export function ecranMaSeance() {
+  const ec = d.enCours;
+  const faits = ec.exercices.filter((x) => x.series.length >= x.cible.series).length;
+  const tuiles = ec.exercices.map((x, i) => {
+    const def = exo(x.exo);
+    const n = x.series.length;
+    const total = x.cible.series;
+    const etat = n >= total ? 'faite' : i === ec.index ? 'encours' : n ? 'entamee' : '';
+    const badge = n >= total ? `${ICONES.coche} Fait` : i === ec.index ? 'En cours' : n ? `${n}/${total} séries` : 'À faire';
+    const detail = n >= total ? resumeSeries(x.series, def) : `${cibleTexte(x.cible, def)}${def.poidsDuCorps || x.charge == null ? '' : ` · ${chargeTexte(chargeSerie(x, n), def)}`}`;
+    return `<button class="tuile ${etat}" data-action="aller-exo" data-i="${i}" ${n >= total ? 'disabled' : ''}>
+      <span class="badge">${badge}</span>
+      <span class="dessin-tuile">${illustration(def.dessin, def.nom, 72)}</span>
+      <span class="nom">${esc(def.nom)}</span>
+      <span class="petit">${esc(detail)}</span>
+      ${d.alertes[def.id] ? '<span class="gene-tuile">Gêne signalée</span>' : ''}
+    </button>`;
+  }).join('');
+  return `<main class="ecran">
+    <div class="ligne">
+      <button class="btn-icone" data-action="retour-seance" aria-label="Retour">${ICONES.retour}</button>
+      <div class="pile u-flex-1 u-ecart-2"><div class="sur-titre">${faits} exercice${faits > 1 ? 's' : ''} fait${faits > 1 ? 's' : ''} sur ${ec.exercices.length}</div><h1 class="u-t-26">Ma séance</h1></div>
+    </div>
+    <div class="petit">Touche un exercice pour le faire maintenant (machine prise, envie de changer l'ordre…).</div>
+    <div class="tuiles">
+      ${tuiles}
+      <button class="tuile ajout" data-action="ajout-seance"><span class="carre-plus">${ICONES.plus}</span><span class="nom">Ajouter un exercice</span></button>
+    </div>
   </main>`;
 }
 
@@ -317,8 +447,60 @@ export const actions = {
     ui.modal = null;
   },
   // --- Échauffement ---
-  'chauffe-ok'() { d.enCours.chauffe.faites++; enregistrer(); },
+  'chauffe-ok'() {
+    const c = d.enCours.chauffe;
+    c.faites++;
+    if (c.faites >= ECHAUFFEMENTS[c.type].series) c.finie = true;
+    enregistrer();
+    window.scrollTo(0, 0);
+  },
   'chauffe-passer'() { d.enCours.chauffe.finie = true; enregistrer(); },
+  // --- Ma séance (tuiles) ---
+  'ma-seance'() { ui.ecran = 'ma-seance'; window.scrollTo(0, 0); },
+  'retour-seance'() { ui.ecran = d.enCours.recup ? 'recup' : 'exercice'; window.scrollTo(0, 0); },
+  'aller-exo'(el) {
+    allerExo(Number(el.dataset.i));
+    ui.ecran = d.enCours.recup ? 'recup' : 'exercice';
+    window.scrollTo(0, 0);
+  },
+  'ajout-seance'() { ui.modal = { type: 'ajout-seance' }; },
+  'ajouter-seance'(el) {
+    ajouterExo(el.dataset.id);
+    ui.modal = null;
+    ui.ecran = d.enCours.recup ? 'recup' : 'exercice';
+    toast(`${nomExo(el.dataset.id)} ajouté`);
+    window.scrollTo(0, 0);
+    return false;
+  },
+  'terminer-seance'() { terminer(); return false; },
+  // --- Douleur ou gêne (prévenir seulement : rien d'autre ne change) ---
+  gene(el) {
+    const a = d.alertes[el.dataset.id];
+    ui.modal = { type: 'gene', exo: el.dataset.id, zone: a?.date === aujourdhui() ? a.zone : null };
+  },
+  'gene-zone'(el) {
+    ui.modal.zone = ui.modal.zone === el.dataset.z ? null : el.dataset.z;
+    ui.modalGardeScroll = true;
+  },
+  'gene-ok'() {
+    const note = (document.getElementById('gene-note')?.value || '').trim();
+    if (!ui.modal.zone && !note) { toast('Choisis une zone ou écris une note'); return false; }
+    d.alertes[ui.modal.exo] = { date: aujourdhui(), zone: ui.modal.zone, note };
+    enregistrer();
+    ui.modal = null;
+    toast('Noté : tu seras prévenu la prochaine fois');
+  },
+  'gene-effacer'() { delete d.alertes[ui.modal.exo]; enregistrer(); ui.modal = null; },
+  'alerte-ok'(el) { delete d.alertes[el.dataset.id]; enregistrer(); toast('Alerte effacée'); },
+  // --- Temps de récup propre à un exercice (fenêtre Options) ---
+  'recup-exo'(el) {
+    const def = exo(exoCourant().exo);
+    const actuel = dureeRecup(def, d);
+    d.recupExo[def.id] = Math.min(RECUP_MAX, Math.max(RECUP_MIN, actuel + Number(el.dataset.d) * RECUP_PAS));
+    enregistrer();
+    ui.modalGardeScroll = true;
+  },
+  'recup-exo-regle'() { delete d.recupExo[exoCourant().exo]; enregistrer(); ui.modalGardeScroll = true; },
   reprendre() {
     ui.ecran = d.enCours.recup ? 'recup' : 'exercice';
     garderEcranAllume();

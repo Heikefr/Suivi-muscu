@@ -7,8 +7,9 @@
 // =====================================================================
 
 import { ICONES, estHaltero, infoExo, nomExo } from './commun.js';
+import { CATEGORIES_RECUP, categorieRecup, dureeRecup, recupCategorie } from './metier/conseils.js';
 import { nomItem } from './ecrans/hyrox.js';
-import { resumeSeries } from './ecrans/seance.js';
+import { ZONES, resumeSeries } from './ecrans/seance.js';
 import { d, ui } from './etat.js';
 import { illustration } from './illustrations.js';
 import { EXERCICES, GROUPES, exo, seance } from './metier/donnees.js';
@@ -24,6 +25,19 @@ function ligneChoix(id, actuel, indexCase) {
     <span><span class="nom u-t-15">${esc(def.nom)}</span><span class="petit">${esc(infoExo(id))}</span></span>
     ${id === actuel ? ICONES.coche : ''}
   </button>`;
+}
+
+/** Réglage du temps de récup propre à un exercice (fenêtre Options). */
+function blocRecupExo(def) {
+  const perso = d.recupExo[def.id] != null;
+  const cat = CATEGORIES_RECUP.find((c) => c.id === categorieRecup(def));
+  return `<div class="carte pile">
+    <div class="ligne"><div class="u-flex-1 u-gras-600">Récup après chaque série</div>
+      <div class="stepper"><button data-action="recup-exo" data-d="-1" aria-label="Récup plus courte">−</button><div class="val">${mmss(dureeRecup(def, d))}</div><button data-action="recup-exo" data-d="1" aria-label="Récup plus longue">+</button></div>
+    </div>
+    <div class="petit">${perso ? `Réglage propre à cet exercice. Règle « ${esc(cat.nom.toLowerCase())} » : ${mmss(recupCategorie(cat.id, d.recupCat))}.` : `Règle « ${esc(cat.nom.toLowerCase())} ». Modifiable pour toutes les catégories dans les Réglages.`}</div>
+    ${perso ? '<button class="btn-lien" data-action="recup-exo-regle">Revenir à la règle</button>' : ''}
+  </div>`;
 }
 
 /** HTML de la fenêtre ouverte (chaîne vide s'il n'y en a pas). */
@@ -81,6 +95,7 @@ export function modalHtml() {
           ${record ? `<button class="btn-lien" data-action="record-inconnu" data-id="${def.id}">Je ne connais pas mon record</button>` : ''}
         </div>
         ${fait === 0 && alts.length ? `<div class="sur-titre">Remplacer par</div>${alts.map((a) => `<button class="choix" data-action="remplacer" data-id="${a.id}" style="min-height:52px"><span><span class="nom u-t-15">${esc(a.nom)}</span><span class="petit">${esc(infoExo(a.id))}</span></span></button>`).join('')}` : ''}
+        ${blocRecupExo(def)}
         <button class="btn-secondaire" data-action="passer-exo">Passer cet exercice</button>
         <button class="btn-principal" data-action="fermer">OK</button>`;
     } else {
@@ -92,9 +107,39 @@ export function modalHtml() {
           <div class="petit">Par pas de ${nb(def.increment)} kg${e.conseillee != null ? ` · conseillé ${nb(e.conseillee)} kg` : ''}. Vaut pour la suite de cet exercice.</div>
         </div>`}
         ${fait === 0 && alts.length ? `<div class="sur-titre">Remplacer par</div>${alts.map((a) => `<button class="choix" data-action="remplacer" data-id="${a.id}" style="min-height:52px"><span class="mini-dessin">${illustration(a.dessin, a.nom, 40)}</span><span><span class="nom u-t-15">${esc(a.nom)}</span><span class="petit">${esc(infoExo(a.id))}</span></span></button>`).join('')}` : ''}
+        ${blocRecupExo(def)}
         <button class="btn-secondaire" data-action="passer-exo">Passer cet exercice</button>
         <button class="btn-principal" data-action="fermer">OK</button>`;
     }
+  } else if (m.type === 'ajout-seance') {
+    // Ajout d'un exercice pendant la séance : la famille de la séance d'abord.
+    const dans = d.enCours.exercices.map((x) => x.exo);
+    const familles = new Set(dans.map((id) => exo(id)?.famille));
+    const ordre = [...GROUPES].sort((a, b) => {
+      const fa = EXERCICES.some((e) => e.groupe === a && familles.has(e.famille)) ? 0 : 1;
+      const fb = EXERCICES.some((e) => e.groupe === b && familles.has(e.famille)) ? 0 : 1;
+      return fa - fb;
+    });
+    contenu = `<h2>Ajouter un exercice</h2>
+      ${ordre.map((g) => {
+    const items = EXERCICES.filter((e) => e.groupe === g && !d.exclus.includes(e.id) && !dans.includes(e.id));
+    return items.length ? `<div class="groupe-titre ${g === 'Haltérophilie' ? 'h' : ''}">${esc(g)}</div>${items.map((e) => `<button class="choix" data-action="ajouter-seance" data-id="${e.id}" style="min-height:52px">
+        <span class="mini-dessin">${illustration(e.dessin, e.nom, 40)}</span><span><span class="nom u-t-15">${esc(e.nom)}</span><span class="petit">${esc(e.muscles)}</span></span></button>`).join('')}` : '';
+  }).join('')}
+      <button class="btn-principal" data-action="fermer">Fermer</button>`;
+  } else if (m.type === 'gene') {
+    const a = d.alertes[m.exo];
+    contenu = `<h2>Douleur ou gêne</h2>
+      <div class="petit">${esc(nomExo(m.exo))} · tu seras prévenu la prochaine fois que tu feras cet exercice.</div>
+      <div class="sur-titre">Où&nbsp;?</div>
+      <div class="puces">${ZONES.map(([z, t]) => `<button class="puce ${m.zone === z ? 'on' : ''}" data-action="gene-zone" data-z="${z}" aria-pressed="${m.zone === z}">${t}</button>`).join('')}</div>
+      <label class="pile u-ecart-6"><span class="petit">Ce que tu as ressenti (facultatif)</span>
+        <textarea id="gene-note" class="champ zone-texte" maxlength="140" rows="3" placeholder="Ex. pincement en haut du mouvement">${esc(a?.date === aujourdhui() ? a.note : '')}</textarea>
+      </label>
+      <div class="petit">Si une douleur revient ou persiste, parles-en à un professionnel de santé.</div>
+      <button class="btn-principal" data-action="gene-ok">Enregistrer</button>
+      ${a ? '<button class="btn-secondaire btn-danger" data-action="gene-effacer">Effacer l\'alerte</button>' : ''}
+      <button class="btn-secondaire" data-action="fermer">Annuler</button>`;
   } else if (m.type === 'record') {
     const def = exo(m.id);
     const r = d.records[def.id];

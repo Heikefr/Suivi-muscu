@@ -7,7 +7,8 @@
 
 import { nomExo } from './commun.js';
 import { d, ui } from './etat.js';
-import { SEANCES, seance } from './metier/donnees.js';
+import { dureeRecup } from './metier/conseils.js';
+import { SEANCES, exo, seance } from './metier/donnees.js';
 import { choisirPourCase } from './metier/progression.js';
 import { ilYa } from './outils.js';
 
@@ -45,7 +46,11 @@ export function composer(seanceId, mode = 'suggestion') {
   ui.compo = { seance: seanceId, mode, cases: mode === 'courte' ? cases.slice(0, 4) : cases };
 }
 
-/** Durée estimée en minutes, arrondie à 5 (45 s d'effort + la récupération, par série). */
+/**
+ * Durée estimée en minutes, arrondie à 5 (45 s d'effort + la récupération, par série).
+ * @param items  [{ exo: id, cible: { series } }]
+ */
 export function dureeEstimee(items) {
-  return Math.max(5, Math.round(items.reduce((t, c) => t + c.cible.series * (45 + c.cible.recup), 0) / 60 / 5) * 5);
+  const total = items.reduce((t, c) => t + c.cible.series * (45 + dureeRecup(exo(c.exo), d)), 0);
+  return Math.max(5, Math.round(total / 60 / 5) * 5);
 }

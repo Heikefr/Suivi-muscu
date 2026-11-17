@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { EXERCICES, exo } from '../js/metier/donnees.js';
 import {
   musclePrincipal, seriesParMuscle, niveauMuscle, musclesOublies, meilleureSerie, records, nouveauxRecords,
-  echauffement, rappelSauvegarde, CORPS_ENTIER,
+  rappelSauvegarde, CORPS_ENTIER,
 } from '../js/metier/bilan.js';
 import { MUSCLES_CARTE } from '../js/carte-muscles.js';
 
@@ -41,14 +41,6 @@ test('records : la plus lourde, puis le plus de répétitions', () => {
   assert.equal(n.length, 1);
   assert.deepEqual([n[0].exo, n[0].reps, n[0].avant.reps], ['dc-barre', 9, 8]);
   assert.equal(records([...avant, s])['dc-barre'].date, '2026-11-08');
-});
-
-test("échauffement : paliers croissants, sous la charge, barre vide au minimum", () => {
-  assert.deepEqual(echauffement(60, exo('dc-barre')), [{ charge: 25, reps: 10 }, { charge: 35, reps: 6 }, { charge: 47.5, reps: 3 }]);
-  assert.deepEqual(echauffement(30, exo('dc-barre')).map((x) => x.charge), [20, 25]);
-  assert.deepEqual(echauffement(20, exo('dc-barre')), []);
-  assert.deepEqual(echauffement(null, exo('dc-barre')), []);
-  assert.deepEqual(echauffement(0, exo('dips')), []);
 });
 
 test('rappel de sauvegarde', () => {
