@@ -8,7 +8,7 @@ import { ICONES, cibleTexte, estHaltero, nav, nomExo } from '../commun.js';
 import { resumeSeries } from './seance.js';
 import { d, enregistrer, toast, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
-import { EXERCICES, GROUPES, SEANCES, exo } from '../metier/donnees.js';
+import { EXERCICES, GROUPES, SEANCES, correspond, exo } from '../metier/donnees.js';
 import { chargeDe, historiqueExo, seancesMemeCharge, tendance } from '../metier/progression.js';
 import { aujourdhui, dateCourte, dateLongue, debutSemaine, esc, ilYa, mmss, nb } from '../outils.js';
 import { musclesOublies, niveauMuscle, records, seriesParMuscle } from '../metier/bilan.js';
@@ -135,20 +135,33 @@ export function ecranProgression() {
   </main>${nav('progression')}`;
 }
 
-/** Onglet Exercices : le catalogue par groupe. */
-export function ecranExercices() {
-  const groupes = GROUPES.map((g) => {
-    const items = EXERCICES.filter((e) => e.groupe === g).map((e) => `
+/** Catalogue filtré par la recherche de l'onglet Exercices. */
+function listeExos() {
+  const q = ui.qExos || '';
+  const html = GROUPES.map((g) => {
+    const items = EXERCICES.filter((e) => e.groupe === g && correspond(e, q)).map((e) => `
       <button class="choix ${d.exclus.includes(e.id) ? 'exclu' : ''}" data-action="detail" data-id="${e.id}" style="min-height:64px">
         <span class="mini-dessin">${illustration(e.dessin, e.nom, 40)}</span>
         <span><span class="nom u-t-15">${esc(e.nom)}</span><span class="petit">${esc(e.muscles)}${d.exclus.includes(e.id) ? ' · exclu' : ''}</span></span>
         ${ICONES.suite}
       </button>`).join('');
-    return `<div class="groupe-titre ${g === 'Haltérophilie' ? 'h' : ''}">${esc(g)}</div>${items}`;
+    return items ? `<div class="groupe-titre ${g === 'Haltérophilie' ? 'h' : ''}">${esc(g)}</div>${items}` : '';
   }).join('');
+  return html || '<div class="carte petit u-t-15">Aucun exercice ne correspond.</div>';
+}
+
+/** Met à jour la liste pendant la frappe, sans redessiner (le clavier reste ouvert). */
+export function majExos() {
+  const liste = document.getElementById('liste-exos');
+  if (liste) liste.innerHTML = listeExos();
+}
+
+/** Onglet Exercices : recherche, puis le catalogue par groupe. */
+export function ecranExercices() {
   return `<main class="ecran avec-nav">
     <div class="pile u-ecart-6"><div class="sur-titre">${EXERCICES.length} exercices · conseils et historique</div><h1>Exercices</h1></div>
-    <div class="pile u-ecart-8">${groupes}</div>
+    <label class="recherche">${ICONES.loupe}<input id="recherche-exos" type="search" placeholder="Rechercher (nom, muscle…)" aria-label="Rechercher un exercice" value="${esc(ui.qExos || '')}" autocomplete="off"></label>
+    <div class="pile u-ecart-8" id="liste-exos">${listeExos()}</div>
   </main>${nav('exercices')}`;
 }
 
@@ -161,7 +174,7 @@ export function ecranDetail() {
   const h = estHaltero(def);
   return `<main class="ecran ${h ? 'theme-haltero' : ''}">
     <div class="ligne">
-      <button class="btn-icone" data-action="onglet" data-id="${ui.retour}" aria-label="Retour">${ICONES.retour}</button>
+      <button class="btn-icone" data-action="retour-detail" aria-label="Retour">${ICONES.retour}</button>
       <div class="sur-titre u-flex-1">${esc(def.groupe)}</div>
     </div>
     <h1 class="u-t-28">${esc(def.nom)}</h1>
@@ -189,7 +202,7 @@ export function ecranDetail() {
 /** Actions des boutons de ce fichier (attribut data-action dans le HTML). */
 export const actions = {
   prog(el) { ui.exoProg = el.dataset.id; window.scrollTo({ top: 0, behavior: 'smooth' }); },
-  'voir-seance'(el) { ui.modal = { type: 'seance', id: el.dataset.id }; },
+  'voir-seance'(el) { ui.modal = { type: 'seance', id: el.dataset.id, jour: el.dataset.jour || null }; },
   'confirmer-suppr'() { ui.modal.confirmer = true; ui.modalGardeScroll = true; },
   'supprimer-seance'(el) {
     d.historique = d.historique.filter((h) => h.id !== el.dataset.id);
@@ -198,7 +211,15 @@ export const actions = {
     toast('Séance supprimée');
     return false;
   },
-  detail(el) { ui.exoDetail = el.dataset.id; ui.retour = 'exercices'; ui.ecran = 'detail'; window.scrollTo(0, 0); },
+  detail(el) {
+    // On retient la position dans la liste pour y revenir au retour.
+    ui.scrollExos = window.scrollY;
+    ui.exoDetail = el.dataset.id;
+    ui.retour = 'exercices';
+    ui.ecran = 'detail';
+    window.scrollTo(0, 0);
+  },
+  'retour-detail'() { ui.ecran = ui.retour; ui.restaurerScroll = ui.scrollExos || 0; },
   exclure(el) {
     const id = el.dataset.id;
     d.exclus = d.exclus.includes(id) ? d.exclus.filter((x) => x !== id) : [...d.exclus, id];

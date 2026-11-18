@@ -11,7 +11,7 @@ import { d, enregistrer, toast, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
 import { seance } from '../metier/donnees.js';
 import {
-  CHARGES, LIBRES, allureTexte, ecrireTemps, genererPlan, joursRestants, lireTemps, niveauCharges, noteCharge,
+  CHARGES, LIBRES, allureTexte, dureeCircuit, ecrireTemps, genererPlan, joursRestants, lireTemps, niveauCharges, noteCharge,
   repartitionConseillee, seanceHyrox, semainesRestantes, suggestionLibre,
 } from '../metier/hyrox.js';
 import { aujourdhui, dateCourte, dateLongue, esc, ilYa, mmss } from '../outils.js';
@@ -36,6 +36,17 @@ function resumeEtapes(s) {
   return p.tours > 1 ? `${p.tours} tours : ${liste}` : liste;
 }
 
+/** Circuits libres : ceux enregistrés, et le bouton pour en composer un. */
+function blocCircuits() {
+  const liste = d.circuits.map((c) => `<button class="choix" data-action="circuit-ouvrir" data-id="${esc(c.id)}" style="min-height:64px">
+      <span><span class="nom u-t-15">${esc(c.nom)}</span><span class="petit">${c.etapes.length} étape${c.etapes.length > 1 ? 's' : ''} · ${c.tours} tour${c.tours > 1 ? 's' : ''} · ≈ ${dureeCircuit(c)} min</span></span>${ICONES.suite}</button>`).join('');
+  return `<div class="pile u-ecart-8">
+    <div class="sur-titre">Circuits libres</div>
+    ${liste}
+    <button class="btn-ajout u-cbord-accent" data-action="circuit-nouveau">+ Composer un circuit</button>
+  </div>`;
+}
+
 /** Présentation, tant qu'aucun profil n'existe. */
 function ecranHyroxIntro() {
   return `<main class="ecran avec-nav theme-hyrox">
@@ -46,6 +57,7 @@ function ecranHyroxIntro() {
     </div>
     <button class="btn-principal" data-action="hyrox-profil">Créer mon profil Hyrox</button>
     <button class="btn-secondaire" data-action="hyrox-libre">Voir les séances Hyrox</button>
+    ${blocCircuits()}
   </main>${nav('hyrox')}`;
 }
 
@@ -156,6 +168,7 @@ export function ecranHyrox() {
     <div class="sur-titre">Cette semaine · ${nbHy} Hyrox${nbMu ? ` + ${nbMu} muscu` : ''}</div>
     <div class="pile u-ecart-8">${lignes}</div>
     <button class="btn-ajout u-cbord-accent" data-action="hyrox-libre">Faire une autre séance Hyrox (libre)</button>
+    ${blocCircuits()}
   </main>${nav('hyrox')}`;
 }
 
@@ -190,6 +203,7 @@ export function ecranHyroxLibre(avecRetour) {
       <button class="choix pointille u-hmin-64" data-action="hyrox-apercu" data-id="test">
         <span><span class="nom u-t-15">Séance test</span><span class="petit">Mesure tes repères : 1 km course, SkiErg et rameur</span></span>${ICONES.suite}</button>
     </div>
+    ${blocCircuits()}
   </main>${avecRetour ? '' : nav('hyrox')}`;
 }
 
@@ -325,6 +339,6 @@ export const actions = {
     return false;
   },
   'hyrox-libre'() { ui.ecran = 'hyrox-libre'; window.scrollTo(0, 0); },
-  'hyrox-apercu'(el) { ui.hyroxApercu = el.dataset.id; ui.ecran = 'hyrox-apercu'; window.scrollTo(0, 0); },
+  'hyrox-apercu'(el) { ui.hyroxApercu = el.dataset.id; ui.planHyrox = null; ui.ecran = 'hyrox-apercu'; window.scrollTo(0, 0); },
   'voir-plan'() { ui.modal = { type: 'plan' }; },
 };

@@ -13,6 +13,11 @@ export function vide() {
     // alertes : douleur ou gêne signalée par exercice { date, zone, note } ;
     // recupCat / recupExo : temps de récup choisis par catégorie / par exercice (secondes).
     alertes: {}, recupCat: {}, recupExo: {},
+    // recupAuto : à la fin de la récup, retour automatique à l'exercice (réglable).
+    // circuits : circuits Hyrox libres enregistrés { id, nom, tours, etapes } (voir metier/hyrox.js).
+    // semaineType : séances prévues par jour (0 = lundi … 6 = dimanche), répétées chaque semaine ;
+    // semaines : semaines modifiées à la main, par lundi { date: [{ id, cle, compo }] } (voir metier/planning.js).
+    recupAuto: true, circuits: [], semaineType: {}, semaines: {},
   };
 }
 
@@ -36,6 +41,10 @@ export function valider(d) {
     recupCat: objet(d.recupCat),
     recupExo: objet(d.recupExo),
     sauvegarde: { derniere: null, rappel: 7, ...objet(d.sauvegarde) },
+    recupAuto: d.recupAuto !== false,
+    circuits: Array.isArray(d.circuits) ? d.circuits.filter((c) => c && Array.isArray(c.etapes)) : [],
+    semaineType: objet(d.semaineType),
+    semaines: objet(d.semaines),
   };
 }
 

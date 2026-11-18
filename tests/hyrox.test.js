@@ -82,3 +82,44 @@ test('charges affichées', () => {
   assert.equal(noteCharge({ charge: 'sledPush', intensite: 'compet' }, null), 'charge de compétition');
   assert.equal(noteCharge({ texte: 'Repos' }, 1), '');
 });
+
+// ---------- Circuits libres ----------
+import {
+  STATIONS, blocsCircuit, circuitValide, dureeCircuit, etapeCircuit, texteEtapeCircuit,
+} from '../js/metier/hyrox.js';
+
+test('circuit : textes des étapes', () => {
+  assert.equal(texteEtapeCircuit({ type: 'course', unite: 'm', valeur: 1000 }), '1 km course');
+  assert.equal(texteEtapeCircuit({ type: 'ski', unite: 'm', valeur: 500 }), '500 m SkiErg');
+  assert.equal(texteEtapeCircuit({ type: 'wallBalls', unite: 'reps', valeur: 25 }), '25 wall balls');
+  assert.equal(texteEtapeCircuit({ type: 'repos', unite: 's', valeur: 90 }), 'Repos 1 min 30');
+  assert.equal(texteEtapeCircuit({ type: 'velo', unite: 's', valeur: 300 }), '5 min vélo');
+  assert.equal(texteEtapeCircuit({ type: 'muscu', exo: 'pompes', unite: 'reps', valeur: 15 }), '15 Pompes');
+  assert.equal(texteEtapeCircuit({ type: 'libre', nom: 'Corde à sauter', unite: 's', valeur: 60 }), '1 min Corde à sauter');
+});
+
+test('circuit : étapes de séance (durée automatique, charges)', () => {
+  const repos = etapeCircuit({ type: 'repos', unite: 's', valeur: 60 });
+  assert.equal(repos.repos, 60);
+  assert.ok(repos.auto);
+  const velo = etapeCircuit({ type: 'velo', unite: 's', valeur: 300 });
+  assert.equal(velo.duree, 300);
+  // Sans charge choisie : charge de compétition selon le profil.
+  const sled = etapeCircuit({ type: 'sledPush', unite: 'm', valeur: 50, charge: null });
+  assert.equal(noteCharge(sled, 1), '102 kg, traîneau compris');
+  const wb = etapeCircuit({ type: 'wallBalls', unite: 'reps', valeur: 20, charge: 6 });
+  assert.equal(noteCharge(wb, 1), 'balle de 6 kg');
+  assert.equal(allureTexte(etapeCircuit({ type: 'course', unite: 'm', valeur: 1000 }), { course10k: 3300 }), '5:45 /km');
+  for (const st of STATIONS) assert.ok(dessinExiste(st.dessin), st.id);
+});
+
+test('circuit : blocs, validité, durée', () => {
+  const c = { nom: 'Stations', tours: 4, etapes: [{ type: 'course', unite: 'm', valeur: 1000 }, { type: 'repos', unite: 's', valeur: 60 }] };
+  const b = blocsCircuit(c);
+  assert.equal(b.length, 1);
+  assert.equal(b[0].tours, 4);
+  assert.equal(b[0].etapes.length, 2);
+  assert.ok(circuitValide(c));
+  assert.ok(!circuitValide({ etapes: [{ type: 'repos', unite: 's', valeur: 60 }] }));
+  assert.equal(dureeCircuit(c), 25); // (330 + 60) × 4 ≈ 26 min → 25
+});

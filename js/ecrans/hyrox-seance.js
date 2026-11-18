@@ -8,7 +8,7 @@
 
 import { ICONES } from '../commun.js';
 import { ecranHyrox, ligneEtape } from './hyrox.js';
-import { d, enregistrer, rendre, ui } from '../etat.js';
+import { clignoter, d, enregistrer, rendre, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
 import {
   ajustement, allureTexte, ecrireTemps, niveauCharges, noteCharge, reperesDepuisTest, seanceHyrox,
@@ -49,14 +49,17 @@ export function ecranHyroxSeance() {
     const tot = h.splits.filter((x) => x.b === h.b && x.t === t).reduce((s, x) => s + x.duree, 0);
     toursFaits.push(`tour ${t + 1} en ${mmss(tot)}`);
   }
-  const libelle = et.repos ? (h.pause ? 'Reprendre' : 'Repos terminé') : 'Étape terminée';
+  // Étape en durée d'un circuit : elle passe toute seule, le bouton permet d'avancer plus tôt.
+  const libelle = et.auto && (et.repos || et.duree) ? (et.repos ? 'Passer le repos' : 'Étape suivante')
+    : et.repos ? 'Repos terminé' : 'Étape terminée';
   return `<main class="ecran theme-hyrox">
-    <div class="ligne">
-      <button class="btn-icone" data-action="quitter-h" aria-label="Quitter la séance">${ICONES.retour}</button>
-      <div class="pile u-flex-1">
-        <div class="sur-titre">${esc(h.nom)} · bloc ${h.b + 1} sur ${h.blocs.length}</div>
-        <div class="barres-h">${barres}</div>
+    <div class="pile u-ecart-8">
+      <div class="ligne u-ecart-8">
+        <button class="btn-icone" data-action="quitter-h" aria-label="Quitter la séance">${ICONES.retour}</button>
+        <div class="sur-titre u-flex-1">${esc(h.nom)}${h.blocs.length > 1 ? ` · bloc ${h.b + 1} sur ${h.blocs.length}` : ''}</div>
+        <button class="btn-terminer" data-action="fin-h">Terminer</button>
       </div>
+      <div class="barres-h">${barres}</div>
     </div>
     <div class="ligne u-items-baseline">
       <h1 class="u-flex-1 u-t-26">${esc(bloc.nom)}</h1>
@@ -93,14 +96,19 @@ export function ticHyrox() {
     if (h.signal === cle || h.pause) return;
     h.signal = cle;
     enregistrer();
-    if (document.visibilityState === 'visible') {
-      ui.flash = true;
-      rendre();
-      setTimeout(() => { ui.flash = false; rendre(); }, 2500);
-    }
+    if (document.visibilityState === 'visible') clignoter();
   };
   if (et.repos || et.duree) {
     const reste = (et.repos || et.duree) - el;
+    // Circuit : l'étape en durée passe toute seule à la suivante, à l'heure exacte où elle a fini
+    // (même si le téléphone était verrouillé : les étapes suivantes sont rattrapées).
+    if (et.auto && reste <= 0 && !h.pause) {
+      // On avance d'abord, puis on clignote : redessiner avant d'avancer relancerait ce même passage.
+      const vu = -reste < 3 && document.visibilityState === 'visible';
+      avancerHyrox(false, h.debutEtape + (et.repos || et.duree) * 1000);
+      if (vu && d.enCoursHyrox) clignoter();
+      return;
+    }
     if (reste > 0) {
       temps.textContent = mmss(Math.ceil(reste));
       sous.textContent = `${et.repos ? 'de repos' : 'restantes'} · total ${mmss(total)}`;
@@ -126,14 +134,17 @@ export function ticHyrox() {
   }
 }
 
-/** Démarre une séance : on copie ses blocs pour qu'elle ne change pas en route. */
-function demarrerHyrox(id) {
-  const s = seanceHyrox(id);
+/**
+ * Démarre une séance Hyrox : on copie ses blocs pour qu'elle ne change pas en route.
+ * @param plan  séance prévue au planning qu'elle réalise (ou null)
+ */
+export function lancerSeanceHyrox({ id, nom, blocs, plan = null }) {
   const maintenant = Date.now();
   d.enCoursHyrox = {
-    id, nom: s.nom, debut: maintenant, blocs: JSON.parse(JSON.stringify(s.blocs(d.hyroxAjust[id] || 0))),
-    b: 0, t: 0, e: 0, debutEtape: maintenant, splits: [], pause: null, signal: null,
+    id, nom, debut: maintenant, blocs: JSON.parse(JSON.stringify(blocs)),
+    b: 0, t: 0, e: 0, debutEtape: maintenant, splits: [], pause: null, signal: null, plan,
   };
+  ui.planHyrox = null;
   enregistrer();
   ui.ecran = 'hyrox-seance';
   garderEcranAllume();
@@ -141,11 +152,21 @@ function demarrerHyrox(id) {
   window.scrollTo(0, 0);
 }
 
-/** Note le temps de l'étape et passe à la suivante (`passe` = étape sautée). */
-function avancerHyrox(passe) {
+/** Démarre une séance type (plan ou libre). */
+function demarrerHyrox(id) {
+  const s = seanceHyrox(id);
+  lancerSeanceHyrox({ id, nom: s.nom, blocs: s.blocs(d.hyroxAjust[id] || 0), plan: ui.planHyrox || null });
+}
+
+/**
+ * Note le temps de l'étape et passe à la suivante.
+ * @param passe  étape sautée
+ * @param quand  heure de fin de l'étape (par défaut : maintenant)
+ */
+function avancerHyrox(passe, quand = null) {
   const h = d.enCoursHyrox;
   const et = etapeCourante();
-  const maintenant = Date.now();
+  const maintenant = quand ?? Date.now();
   h.splits.push({ b: h.b, t: h.t, e: h.e, texte: et.texte, duree: Math.round((maintenant - h.debutEtape) / 1000), passe: Boolean(passe), repos: Boolean(et.repos), mesure: et.mesure || null });
   h.e++;
   const bloc = h.blocs[h.b];
@@ -179,6 +200,7 @@ function finirHyrox() {
     id: `h${h.debut}`, date: aujourdhui(), debut: h.debut, fin, seance: `hyrox:${h.id}`, nom: h.nom, exercices: [],
     hyrox: { total: Math.round((fin - h.debut) / 1000), splits: h.splits, ressenti: null, ajustAvant: d.hyroxAjust[h.id] || 0 },
   };
+  if (h.plan) s.plan = h.plan;
   d.historique.push(s);
   d.enCoursHyrox = null;
   libererEcran();
@@ -214,10 +236,11 @@ export function ecranHyroxFin() {
     <div class="carte pile u-ecart-12 u-pad-16">
       <div class="u-t-15 u-gras-600">Comment était cette séance&nbsp;?</div>
       <div class="grille3 choix-ressenti u-ecart-8">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
-      <div class="petit">Facile : un tour de plus la prochaine fois. Dur : un tour de moins.</div>
+      ${s.seance.startsWith('hyrox:circuit:') ? '' : '<div class="petit">Facile : un tour de plus la prochaine fois. Dur : un tour de moins.</div>'}
     </div>
     <div class="carte liste-perf">${detail}</div>
-    <button class="btn-principal" data-action="onglet" data-id="hyrox">Retour</button>
+    ${s.seance.startsWith('hyrox:circuit:') ? '<button class="btn-principal" data-action="onglet" data-id="seances">Retour à l\'accueil</button>'
+    : '<button class="btn-principal" data-action="onglet" data-id="hyrox">Retour</button>'}
   </main>`;
 }
 
@@ -238,6 +261,7 @@ export const actions = {
     enregistrer();
   },
   'quitter-h'() { ui.modal = { type: 'quitter-h' }; },
+  'fin-h'() { ui.modal = { type: 'fin-h' }; },
   'pause-h'() { ui.modal = null; ui.ecran = 'hyrox'; libererEcran(); },
   'terminer-h'() { ui.modal = null; finirHyrox(); return false; },
   'abandonner-h'() {
@@ -251,7 +275,8 @@ export const actions = {
     const s = d.historique.find((x) => x.id === ui.finId);
     s.hyrox.ressenti = s.hyrox.ressenti === el.dataset.v ? null : el.dataset.v;
     const id = s.seance.slice(6);
-    d.hyroxAjust[id] = s.hyrox.ressenti ? ajustement(s.hyrox.ajustAvant, s.hyrox.ressenti) : s.hyrox.ajustAvant;
+    // Un circuit libre garde ses tours : seules les séances types s'adaptent au ressenti.
+    if (!id.startsWith('circuit:')) d.hyroxAjust[id] = s.hyrox.ressenti ? ajustement(s.hyrox.ajustAvant, s.hyrox.ressenti) : s.hyrox.ajustAvant;
     enregistrer();
   },
 };

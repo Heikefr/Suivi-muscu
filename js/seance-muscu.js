@@ -51,11 +51,15 @@ export function preparerExo(item) {
   return { ...base, conseillee: sug.charge, charge: sug.charge, raison: sug.raison };
 }
 
-/** Démarre une séance avec la liste d'exercices choisie. */
-export function demarrer(seanceId, nom, items) {
+/**
+ * Démarre une séance avec la liste d'exercices choisie.
+ * @param lien  { plan : séance prévue au planning, enregistree : séance enregistrée d'origine }
+ */
+export function demarrer(seanceId, nom, items, lien = {}) {
   if (!items.length) return;
   d.enCours = {
     seance: seanceId, nom, debut: Date.now(), index: 0, recup: null,
+    plan: lien.plan || null, enregistree: lien.enregistree || null,
     // Échauffement : un exercice léger à part, adapté à la séance (voir ECHAUFFEMENTS).
     // type = clé de ECHAUFFEMENTS, faites = séries de chauffe faites, finie = fait ou passé.
     chauffe: { type: echauffementPour(seanceId, items.map((it) => exo(it.exo)?.famille)), faites: 0, finie: false },
@@ -177,6 +181,9 @@ export function terminer() {
     seance: ec.seance, nom: ec.nom || seance(ec.seance)?.nom || ec.seance,
     exercices: faits.map((e) => ({ exo: e.exo, nom: nomExo(e.exo), series: e.series })),
   };
+  // Lien avec le planning et la séance enregistrée d'origine (seulement s'il existe).
+  if (ec.plan) s.plan = ec.plan;
+  if (ec.enregistree) s.enregistree = ec.enregistree;
   // Records battus (hors haltérophilie, qui a déjà son propre suivi du record).
   ui.finRecords = nouveauxRecords(d.historique, s).filter((r) => !estHaltero(exo(r.exo)));
   d.historique.push(s);

@@ -8,11 +8,13 @@
 
 import { ICONES, estHaltero, infoExo, nomExo } from './commun.js';
 import { CATEGORIES_RECUP, categorieRecup, dureeRecup, recupCategorie } from './metier/conseils.js';
+import { fenetreEtape, listeExosEtape } from './ecrans/circuit.js';
 import { nomItem } from './ecrans/hyrox.js';
+import { fenetreDecaler, fenetreJour, fenetreMesSeances, fenetrePlanifier } from './ecrans/planning.js';
 import { ZONES, resumeSeries } from './ecrans/seance.js';
 import { d, ui } from './etat.js';
 import { illustration } from './illustrations.js';
-import { EXERCICES, GROUPES, exo, seance } from './metier/donnees.js';
+import { EXERCICES, GROUPES, correspond, exo, seance } from './metier/donnees.js';
 import { genererPlan } from './metier/hyrox.js';
 import { aujourdhui, dateCourte, dateLongue, esc, mmss, nb } from './outils.js';
 import { chargeSerie, exoCourant } from './seance-muscu.js';
@@ -25,6 +27,60 @@ function ligneChoix(id, actuel, indexCase) {
     <span><span class="nom u-t-15">${esc(def.nom)}</span><span class="petit">${esc(infoExo(id))}</span></span>
     ${id === actuel ? ICONES.coche : ''}
   </button>`;
+}
+
+/** Exercices du catalogue regroupés par groupe musculaire, dans l'ordre donné. */
+function parGroupe(ordre, garde, ligne) {
+  return ordre.map((g) => {
+    const items = EXERCICES.filter((e) => e.groupe === g && garde(e));
+    return items.length ? `<div class="groupe-titre ${g === 'Haltérophilie' ? 'h' : ''}">${esc(g)}</div>${items.map(ligne).join('')}` : '';
+  }).join('') || '<div class="carte petit">Aucun exercice ne correspond.</div>';
+}
+
+/** Groupes musculaires, ceux des familles données d'abord. */
+function groupesDabord(familles) {
+  return [...GROUPES].sort((a, b) => {
+    const fa = EXERCICES.some((e) => e.groupe === a && familles.has(e.famille)) ? 0 : 1;
+    const fb = EXERCICES.some((e) => e.groupe === b && familles.has(e.famille)) ? 0 : 1;
+    return fa - fb;
+  });
+}
+
+/** Champ de recherche d'une fenêtre (la liste en dessous se met à jour sans fermer le clavier). */
+function champRecherche(m) {
+  return `<label class="recherche">${ICONES.loupe}<input id="recherche-feuille" type="search" placeholder="Rechercher un exercice" aria-label="Rechercher un exercice" value="${esc(m.q || '')}" autocomplete="off"></label>`;
+}
+
+/**
+ * La liste filtrable d'une fenêtre (choix d'exercice, ajout pendant la séance, étape de circuit).
+ * Appelée aussi à chaque lettre tapée dans la recherche (voir app.js).
+ */
+export function listeFeuille(m) {
+  const q = (m.q || '').trim();
+  if (m.type === 'etape') return listeExosEtape(m);
+  if (m.type === 'ajout-seance') {
+    const dans = d.enCours.exercices.map((x) => x.exo);
+    const familles = new Set(dans.map((id) => exo(id)?.famille));
+    return parGroupe(groupesDabord(familles), (e) => !d.exclus.includes(e.id) && !dans.includes(e.id) && correspond(e, q),
+      (e) => `<button class="choix" data-action="ajouter-seance" data-id="${e.id}" style="min-height:52px">
+        <span class="mini-dessin">${illustration(e.dessin, e.nom, 40)}</span><span><span class="nom u-t-15">${esc(e.nom)}</span><span class="petit">${esc(e.muscles)}</span></span></button>`);
+  }
+  // Choix d'exercice dans « Composer ta séance » (m.i = case à changer, -1 = ajout).
+  const c = ui.compo;
+  const dejaLa = c.cases.map((k) => k.exo);
+  const actuel = m.i >= 0 ? c.cases[m.i].exo : null;
+  const libre = (e) => !d.exclus.includes(e.id) && (e.id === actuel || !dejaLa.includes(e.id));
+  if (q) return parGroupe(GROUPES, (e) => libre(e) && correspond(e, q), (e) => ligneChoix(e.id, actuel, m.i));
+  if (m.i >= 0) {
+    const cas = c.cases[m.i];
+    const def = exo(cas.exo);
+    const sug = cas.options.filter((o) => !d.exclus.includes(o) && (o === cas.exo || !dejaLa.includes(o)));
+    const autres = EXERCICES.filter((e) => e.groupe === def.groupe && !sug.includes(e.id) && libre(e));
+    return `${sug.length ? `<div class="sur-titre">Suggérés</div>${sug.map((id) => ligneChoix(id, cas.exo, m.i)).join('')}` : ''}
+      ${autres.length ? `<div class="sur-titre">Tous les exercices ${esc(def.groupe.toLowerCase())}</div>${autres.map((e) => ligneChoix(e.id, cas.exo, m.i)).join('')}` : ''}
+      <div class="petit">Un autre muscle ? Utilise la recherche.</div>`;
+  }
+  return parGroupe(groupesDabord(new Set([seance(c.seance)?.id])), libre, (e) => ligneChoix(e.id, null, -1));
 }
 
 /** Réglage du temps de récup propre à un exercice (fenêtre Options). */
@@ -46,31 +102,11 @@ export function modalHtml() {
   if (!m) return '';
   let contenu = '';
   if (m.type === 'choix') {
-    const c = ui.compo;
-    const dejaLa = c.cases.map((k) => k.exo);
-    if (m.i >= 0) {
-      const cas = c.cases[m.i];
-      const def = exo(cas.exo);
-      const sug = cas.options.filter((o) => !d.exclus.includes(o) && (o === cas.exo || !dejaLa.includes(o)));
-      const autres = EXERCICES.filter((e) => e.groupe === def.groupe && !sug.includes(e.id) && !d.exclus.includes(e.id) && !dejaLa.includes(e.id));
-      contenu = `<div class="label petit">${esc(cas.role)}</div><h2>Choisis l'exercice</h2>
-        ${sug.length ? `<div class="sur-titre">Suggérés</div>${sug.map((id) => ligneChoix(id, cas.exo, m.i)).join('')}` : ''}
-        ${autres.length ? `<div class="sur-titre">Tous les exercices ${esc(def.groupe.toLowerCase())}</div>${autres.map((e) => ligneChoix(e.id, cas.exo, m.i)).join('')}` : ''}
-        <button class="btn-principal" data-action="fermer">Fermer</button>`;
-    } else {
-      const s = seance(c.seance);
-      const ordre = [...GROUPES].sort((a, b) => {
-        const fa = EXERCICES.some((e) => e.groupe === a && e.famille === s.id) ? 0 : 1;
-        const fb = EXERCICES.some((e) => e.groupe === b && e.famille === s.id) ? 0 : 1;
-        return fa - fb;
-      });
-      contenu = `<h2>Ajouter un exercice</h2>
-        ${ordre.map((g) => {
-    const items = EXERCICES.filter((e) => e.groupe === g && !d.exclus.includes(e.id) && !dejaLa.includes(e.id));
-    return items.length ? `<div class="groupe-titre ${g === 'Haltérophilie' ? 'h' : ''}">${esc(g)}</div>${items.map((e) => ligneChoix(e.id, null, -1)).join('')}` : '';
-  }).join('')}
-        <button class="btn-principal" data-action="fermer">Fermer</button>`;
-    }
+    const cas = m.i >= 0 ? ui.compo.cases[m.i] : null;
+    contenu = `${cas ? `<div class="label petit">${esc(cas.role || exo(cas.exo).groupe)}</div><h2>Choisis l'exercice</h2>` : '<h2>Ajouter un exercice</h2>'}
+      ${champRecherche(m)}
+      <div class="pile u-ecart-8" id="liste-feuille">${listeFeuille(m)}</div>
+      <button class="btn-principal" data-action="fermer">Fermer</button>`;
   } else if (m.type === 'options') {
     const e = exoCourant();
     const def = exo(e.exo);
@@ -113,19 +149,9 @@ export function modalHtml() {
     }
   } else if (m.type === 'ajout-seance') {
     // Ajout d'un exercice pendant la séance : la famille de la séance d'abord.
-    const dans = d.enCours.exercices.map((x) => x.exo);
-    const familles = new Set(dans.map((id) => exo(id)?.famille));
-    const ordre = [...GROUPES].sort((a, b) => {
-      const fa = EXERCICES.some((e) => e.groupe === a && familles.has(e.famille)) ? 0 : 1;
-      const fb = EXERCICES.some((e) => e.groupe === b && familles.has(e.famille)) ? 0 : 1;
-      return fa - fb;
-    });
     contenu = `<h2>Ajouter un exercice</h2>
-      ${ordre.map((g) => {
-    const items = EXERCICES.filter((e) => e.groupe === g && !d.exclus.includes(e.id) && !dans.includes(e.id));
-    return items.length ? `<div class="groupe-titre ${g === 'Haltérophilie' ? 'h' : ''}">${esc(g)}</div>${items.map((e) => `<button class="choix" data-action="ajouter-seance" data-id="${e.id}" style="min-height:52px">
-        <span class="mini-dessin">${illustration(e.dessin, e.nom, 40)}</span><span><span class="nom u-t-15">${esc(e.nom)}</span><span class="petit">${esc(e.muscles)}</span></span></button>`).join('')}` : '';
-  }).join('')}
+      ${champRecherche(m)}
+      <div class="pile u-ecart-8" id="liste-feuille">${listeFeuille(m)}</div>
       <button class="btn-principal" data-action="fermer">Fermer</button>`;
   } else if (m.type === 'gene') {
     const a = d.alertes[m.exo];
@@ -159,13 +185,55 @@ export function modalHtml() {
       <button class="btn-principal" data-action="note-ok">Enregistrer</button>
       <button class="btn-secondaire" data-action="fermer">Annuler</button>`;
   } else if (m.type === 'enregistrer') {
-    contenu = `<h2>Enregistrer la séance</h2>
-      <label class="pile u-ecart-6"><span class="petit">Nom de la séance</span>
-        <input id="nom-seance" class="champ" maxlength="40" value="${esc(ui.perso.nom || '')}" placeholder="Ex. Haltéro arraché">
+    // quoi : 'perso' (séance personnalisée), 'compo' (Push / Pull / Jambes composée), 'circuit' (Hyrox).
+    const circuit = m.quoi === 'circuit';
+    const action = { perso: 'enregistrer-ok', compo: 'enregistrer-compo-ok', circuit: 'enregistrer-circuit-ok' }[m.quoi];
+    contenu = `<h2>${circuit ? 'Enregistrer le circuit' : 'Enregistrer la séance'}</h2>
+      <label class="pile u-ecart-6"><span class="petit">Nom</span>
+        <input id="nom-seance" class="champ" maxlength="40" value="${esc(m.nom || '')}" placeholder="${circuit ? 'Ex. Stations ×4' : 'Ex. Haut du corps express'}">
       </label>
-      <div class="petit">Elle apparaîtra sur l'accueil, sous « Séance personnalisée ».</div>
-      <button class="btn-principal" data-action="enregistrer-ok">Enregistrer</button>
+      <div class="petit">Tu la retrouveras dans « Mes séances » sur l'accueil, et tu pourras la planifier.</div>
+      <button class="btn-principal" data-action="${action}">Enregistrer</button>
       <button class="btn-secondaire" data-action="fermer">Annuler</button>`;
+  } else if (m.type === 'suppr-circuit') {
+    contenu = `<h2>Supprimer « ${esc(ui.circuit.nom)} » ?</h2>
+      <div class="petit">Seul le circuit enregistré est supprimé, pas ton historique.</div>
+      <button class="btn-secondaire btn-danger" data-action="circuit-suppr-ok">Oui, supprimer</button>
+      <button class="btn-principal" data-action="fermer">Annuler</button>`;
+  } else if (m.type === 'fin-anticipee') {
+    const ec = d.enCours;
+    const series = ec.exercices.reduce((t, e) => t + e.series.length, 0);
+    const faits = ec.exercices.filter((e) => e.series.length).length;
+    const restants = ec.exercices.filter((e) => e.series.length < e.cible.series).length;
+    contenu = series ? `<h2>Terminer la séance&nbsp;?</h2>
+      <div class="u-t-15">${faits} exercice${faits > 1 ? 's' : ''} commencé${faits > 1 ? 's' : ''} · ${series} série${series > 1 ? 's' : ''} validée${series > 1 ? 's' : ''}.</div>
+      <div class="petit">${restants ? 'Ce qui n\'est pas fait n\'est pas enregistré et ne compte pas dans ta progression.' : 'Tout est fait.'}</div>
+      <button class="btn-principal" data-action="terminer">Terminer et enregistrer</button>
+      <button class="btn-secondaire" data-action="fermer">Continuer la séance</button>`
+    : `<h2>Aucune série validée</h2>
+      <div class="petit">Il n'y a rien à enregistrer pour l'instant.</div>
+      <button class="btn-secondaire btn-danger" data-action="abandonner">Arrêter sans enregistrer</button>
+      <button class="btn-principal" data-action="fermer">Continuer la séance</button>`;
+  } else if (m.type === 'fin-h') {
+    const faites = d.enCoursHyrox.splits.filter((x) => !x.repos && !x.passe).length;
+    contenu = faites ? `<h2>Terminer la séance&nbsp;?</h2>
+      <div class="u-t-15">${faites} étape${faites > 1 ? 's' : ''} faite${faites > 1 ? 's' : ''}. Le reste n'est pas enregistré.</div>
+      <button class="btn-principal" data-action="terminer-h">Terminer et enregistrer</button>
+      <button class="btn-secondaire" data-action="fermer">Continuer la séance</button>`
+    : `<h2>Aucune étape faite</h2>
+      <div class="petit">Il n'y a rien à enregistrer pour l'instant.</div>
+      <button class="btn-secondaire btn-danger" data-action="abandonner-h">Arrêter sans enregistrer</button>
+      <button class="btn-principal" data-action="fermer">Continuer la séance</button>`;
+  } else if (m.type === 'jour') {
+    contenu = fenetreJour(m);
+  } else if (m.type === 'planifier') {
+    contenu = fenetrePlanifier(m);
+  } else if (m.type === 'decaler') {
+    contenu = fenetreDecaler(m);
+  } else if (m.type === 'mes-seances') {
+    contenu = fenetreMesSeances(m);
+  } else if (m.type === 'etape') {
+    contenu = fenetreEtape(m);
   } else if (m.type === 'suppr-perso') {
     contenu = `<h2>Supprimer « ${esc(ui.perso.nom)} » ?</h2>
       <div class="petit">Seule la séance enregistrée est supprimée, pas ton historique.</div>
@@ -204,6 +272,7 @@ export function modalHtml() {
       ${m.confirmer ? `<div class="petit">Supprimer définitivement cette séance&nbsp;?</div>
         <button class="btn-secondaire btn-danger" data-action="supprimer-seance" data-id="${esc(s.id)}">Oui, supprimer</button>`
     : '<button class="btn-secondaire btn-danger" data-action="confirmer-suppr">Supprimer cette séance</button>'}
+      ${m.jour ? `<button class="btn-secondaire" data-action="retour-jour" data-date="${m.jour}">Voir toute la journée</button>` : ''}
       <button class="btn-principal" data-action="fermer">Fermer</button>`;
   } else if (m.type === 'effacer') {
     contenu = `
@@ -219,6 +288,7 @@ export function modalHtml() {
       <button class="btn-principal" data-action="fermer">OK</button>`;
   }
   const theme = m.type === 'options' && d.enCours && estHaltero(exo(exoCourant().exo)) ? 'theme-haltero'
-    : ['quitter-h', 'plan'].includes(m.type) ? 'theme-hyrox' : '';
+    : ['quitter-h', 'plan', 'fin-h', 'etape', 'suppr-circuit'].includes(m.type)
+      || (m.type === 'enregistrer' && m.quoi === 'circuit') ? 'theme-hyrox' : '';
   return `<div class="voile" data-action="voile"><div class="feuille ${theme}" role="dialog" aria-modal="true">${contenu}</div></div>`;
 }

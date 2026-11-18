@@ -2,7 +2,8 @@
 // Fonctions pures : testées par tests/hyrox.test.js.
 // Séances écrites pour l'appli (inspirées des principes classiques d'entraînement Hyrox).
 
-import { mmss } from '../outils.js';
+import { exo } from './donnees.js';
+import { mmss, nb } from '../outils.js';
 
 // ---------- Étapes ----------
 
@@ -350,4 +351,114 @@ export function suggestionLibre(historique) {
 export function ajustement(avant, ressenti) {
   const d = ressenti === 'dur' ? -1 : ressenti === 'facile' ? 1 : 0;
   return Math.max(-2, Math.min(2, (avant || 0) + d));
+}
+
+// ---------- Circuits libres (composés par l'utilisateur) ----------
+// Un circuit enregistré : { id, nom, tours, etapes: [etape] }.
+// Une étape : { type, unite: 'm' | 'reps' | 's', valeur, charge (kg, ou null = charge de compétition),
+//               exo (type 'muscu'), nom (type 'libre') }.
+
+/**
+ * Ce qu'on peut mettre dans un circuit. `unites` : réglages possibles (le premier est proposé par défaut),
+ * `chargeCle` : charge de compétition correspondante (voir CHARGES), `pas` : pas du réglage par unité.
+ */
+export const STATIONS = [
+  { id: 'course', nom: 'Course', libelle: 'course', dessin: 'h-course', unites: ['m', 's'], defaut: { m: 1000, s: 600 }, conseil: course(0).conseil },
+  { id: 'ski', nom: 'SkiErg', libelle: 'SkiErg', dessin: 'h-ski', unites: ['m', 's'], defaut: { m: 1000, s: 300 }, conseil: ski(0).conseil },
+  { id: 'rameur', nom: 'Rameur', libelle: 'rameur', dessin: 'h-rameur', unites: ['m', 's'], defaut: { m: 1000, s: 300 }, conseil: rameur(0).conseil },
+  { id: 'sledPush', nom: 'Sled push', libelle: 'sled push', dessin: 'h-sled-push', unites: ['m'], defaut: { m: 50 }, chargeCle: 'sledPush', conseil: sledPush().conseil },
+  { id: 'sledPull', nom: 'Sled pull', libelle: 'sled pull', dessin: 'h-sled-pull', unites: ['m'], defaut: { m: 50 }, chargeCle: 'sledPull', conseil: sledPull().conseil },
+  { id: 'bbj', nom: 'Burpees sauts en longueur', libelle: 'burpees sauts en longueur', dessin: 'h-bbj', unites: ['m', 'reps'], defaut: { m: 80, reps: 20 }, conseil: bbj().conseil },
+  { id: 'farmers', nom: 'Farmers carry', libelle: 'farmers carry', dessin: 'h-farmers', unites: ['m'], defaut: { m: 200 }, chargeCle: 'farmers', conseil: farmers().conseil },
+  { id: 'fentes', nom: 'Fentes sac de sable', libelle: 'fentes sac de sable', dessin: 'h-fentes', unites: ['m', 'reps'], defaut: { m: 100, reps: 20 }, chargeCle: 'fentes', conseil: fentes().conseil },
+  { id: 'wallBalls', nom: 'Wall balls', libelle: 'wall balls', dessin: 'h-wallball', unites: ['reps'], defaut: { reps: 100 }, chargeCle: 'wallball', conseil: wallBalls(0).conseil },
+  { id: 'velo', nom: 'Vélo', libelle: 'vélo', dessin: 'h-velo', unites: ['s', 'm'], defaut: { s: 300, m: 2000 }, conseil: velo(0).conseil },
+  { id: 'muscu', nom: 'Exercice de muscu', dessin: 'curl-halteres', unites: ['reps', 's'], defaut: { reps: 10, s: 45 } },
+  { id: 'libre', nom: 'Étape libre', libelle: '', dessin: 'h-mobilite', unites: ['reps', 'm', 's'], defaut: { reps: 10, m: 200, s: 60 } },
+  { id: 'repos', nom: 'Repos', libelle: 'repos', dessin: 'h-repos', unites: ['s'], defaut: { s: 60 } },
+];
+
+/** Pas des réglages selon l'unité et la valeur (plus fin pour les petites valeurs). */
+export function pasValeur(unite, valeur) {
+  if (unite === 'reps') return valeur < 20 ? 1 : 5;
+  if (unite === 's') return valeur < 60 ? 5 : 15;
+  return valeur < 100 ? 10 : valeur < 1000 ? 50 : 250;
+}
+
+/** Station d'une étape de circuit. */
+export function station(id) {
+  return STATIONS.find((x) => x.id === id) || null;
+}
+
+/** Durée lisible : 45 → « 45 s », 300 → « 5 min », 90 → « 1 min 30 ». */
+export function dureeTexte(s) {
+  if (s < 60) return `${s} s`;
+  const r = s % 60;
+  return r ? `${Math.floor(s / 60)} min ${String(r).padStart(2, '0')}` : `${s / 60} min`;
+}
+
+/** Nom affiché d'une étape : « 1 km course », « 100 wall balls », « 45 s Planche », « Repos 1 min ». */
+export function texteEtapeCircuit(et) {
+  const st = station(et.type);
+  if (!st) return 'Étape';
+  const def = et.type === 'muscu' ? exo(et.exo) : null;
+  const quoi = et.type === 'muscu' ? (def?.nom || 'Exercice') : et.type === 'libre' ? (et.nom || 'Étape libre') : st.libelle;
+  if (et.type === 'repos') return `Repos ${dureeTexte(et.valeur)}`;
+  if (et.unite === 's') return `${dureeTexte(et.valeur)} ${quoi}`;
+  if (et.unite === 'm') return `${dist(et.valeur)} ${quoi}`;
+  return `${et.valeur} ${quoi}`;
+}
+
+/** Charge choisie, en texte (« sac de 10 kg »…) ; '' si l'étape n'en a pas. */
+function texteChargeCircuit(et) {
+  if (et.charge == null) return '';
+  const c = nb(et.charge);
+  switch (et.type) {
+    case 'sledPush': case 'sledPull': return `${c} kg, traîneau compris`;
+    case 'farmers': return `2 × ${c} kg`;
+    case 'fentes': return `sac de ${c} kg`;
+    case 'wallBalls': return `balle de ${c} kg`;
+    default: return `${c} kg`;
+  }
+}
+
+/**
+ * Étape de circuit → étape de séance, comprise par l'écran de séance Hyrox.
+ * Les étapes en durée (et les repos) passent toutes seules à la suivante (auto).
+ */
+export function etapeCircuit(et) {
+  const st = station(et.type) || station('libre');
+  const def = et.type === 'muscu' ? exo(et.exo) : null;
+  const e = { texte: texteEtapeCircuit(et), dessin: def?.dessin || st.dessin, conseil: def?.conseil || st.conseil || '', auto: true };
+  if (et.type === 'repos') return { ...e, repos: et.valeur };
+  if (et.unite === 's') e.duree = et.valeur;
+  if (et.type === 'course') e.allure = { type: 'course', mode: et.unite === 's' ? 'facile' : 'compromis' };
+  if ((et.type === 'ski' || et.type === 'rameur') && et.unite === 'm') e.allure = { type: et.type, delta: 3 };
+  if (et.charge != null) e.note = texteChargeCircuit(et);
+  else if (st.chargeCle) Object.assign(e, { charge: st.chargeCle, intensite: 'compet' });
+  return e;
+}
+
+/** Blocs de séance d'un circuit : un seul bloc, répété `tours` fois. */
+export function blocsCircuit(c) {
+  return [{ nom: 'Circuit', tours: Math.max(1, c.tours || 1), etapes: c.etapes.map(etapeCircuit) }];
+}
+
+/** Vrai si le circuit peut se lancer : au moins une étape qui n'est pas un repos. */
+export function circuitValide(c) {
+  return Boolean(c?.etapes?.some((et) => et.type !== 'repos'));
+}
+
+// Durée estimée d'une étape, en secondes (allures moyennes, pour donner un ordre d'idée).
+const SECONDES_PAR_M = { course: 0.33, ski: 0.27, rameur: 0.26, sledPush: 1.8, sledPull: 2, bbj: 3.5, farmers: 0.6, fentes: 2.5, velo: 0.12, libre: 0.5 };
+function dureeEtape(et) {
+  if (et.unite === 's') return et.valeur;
+  if (et.unite === 'reps') return et.valeur * (et.type === 'bbj' ? 6 : 3.5);
+  return et.valeur * (SECONDES_PAR_M[et.type] ?? 0.5);
+}
+
+/** Durée estimée d'un circuit, en minutes arrondies à 5 (au moins 5). */
+export function dureeCircuit(c) {
+  const tour = c.etapes.reduce((t, et) => t + dureeEtape(et), 0);
+  return Math.max(5, Math.round((tour * Math.max(1, c.tours || 1)) / 60 / 5) * 5);
 }

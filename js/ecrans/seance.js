@@ -6,7 +6,7 @@
 
 import { ICONES, chargeTexte, cibleTexte, estHaltero, nomExo, repsTexte } from '../commun.js';
 import { ecranAccueil } from './accueil.js';
-import { d, enregistrer, rendre, toast, ui } from '../etat.js';
+import { clignoter, d, enregistrer, toast, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
 import { EXERCICES, exo, seance } from '../metier/donnees.js';
 import { ECHAUFFEMENTS, RECUP_MAX, RECUP_MIN, RECUP_PAS, dureeRecup, erreurAEviter } from '../metier/conseils.js';
@@ -17,17 +17,18 @@ import {
   recalculerPlan, terminer, validerSerie,
 } from '../seance-muscu.js';
 
-/** Haut de l'écran : bouton quitter, nom de la séance, avancement. */
-function enteteSeance(theme) {
+/** Haut de l'écran : bouton quitter, nom de la séance, avancement, « Terminer » et « Ma séance ». */
+function enteteSeance() {
   const ec = d.enCours;
   const barres = ec.exercices.map((x) => `<div class="${x.series.length >= x.cible.series ? 'fait' : ''}"></div>`).join('');
-  return `<div class="ligne">
-      <button class="btn-icone" data-action="quitter" aria-label="Quitter la séance">${ICONES.retour}</button>
-      <div class="pile u-flex-1">
-        <div class="sur-titre">${esc(ec.nom || seance(ec.seance)?.nom)} · exercice ${ec.index + 1} sur ${ec.exercices.length}</div>
-        <div class="barres" style="grid-template-columns:repeat(${ec.exercices.length},minmax(0,1fr))">${barres}</div>
+  return `<div class="pile u-ecart-8">
+      <div class="ligne u-ecart-8">
+        <button class="btn-icone" data-action="quitter" aria-label="Quitter la séance">${ICONES.retour}</button>
+        <div class="sur-titre u-flex-1">${esc(ec.nom || seance(ec.seance)?.nom)} · exercice ${ec.index + 1} sur ${ec.exercices.length}</div>
+        <button class="btn-terminer" data-action="fin-anticipee">Terminer</button>
+        <button class="btn-icone" data-action="ma-seance" aria-label="Ma séance : tous les exercices">${ICONES.tuiles}</button>
       </div>
-      <button class="btn-icone" data-action="ma-seance" aria-label="Ma séance : tous les exercices">${ICONES.tuiles}</button>
+      <div class="barres" style="grid-template-columns:repeat(${ec.exercices.length},minmax(0,1fr))">${barres}</div>
     </div>`;
 }
 
@@ -295,8 +296,9 @@ export function ecranRecup() {
     <div class="ligne">
       <div class="pile u-ecart-6 u-flex-1">
         <div class="sur-titre">${esc(nomExo(exoFait.exo))} · série ${r.serieIndex + 1} validée</div>
-        <h1 class="u-t-28" id="recup-titre">Récupération</h1>
+        <h1 class="u-t-26" id="recup-titre">Récupération</h1>
       </div>
+      ${r.finSeance ? '' : '<button class="btn-terminer" data-action="fin-anticipee">Terminer</button>'}
       <button class="btn-icone" data-action="ma-seance" aria-label="Ma séance : tous les exercices">${ICONES.tuiles}</button>
     </div>
     <div class="minuteur">
@@ -354,6 +356,8 @@ export function ecranMaSeance() {
       ${tuiles}
       <button class="tuile ajout" data-action="ajout-seance"><span class="carre-plus">${ICONES.plus}</span><span class="nom">Ajouter un exercice</span></button>
     </div>
+    <div class="pousse"></div>
+    <button class="btn-secondaire u-h-52" data-action="fin-anticipee">Terminer la séance maintenant</button>
   </main>`;
 }
 
@@ -428,11 +432,12 @@ export function tic() {
       enregistrer();
       // Clignote seulement si la fin vient d'arriver sous tes yeux.
       if (depuis < 5 && document.visibilityState === 'visible') {
-        ui.flash = true;
-        rendre();
-        setTimeout(() => { ui.flash = false; rendre(); }, 2500);
+        clignoter();
       }
     }
+    // Retour automatique à l'exercice (réglable) : 1 seconde après la fin, le temps de voir « 0:00 ».
+    // Pas après la dernière série (l'écran propose la suite), ni pendant une saisie dans une fenêtre.
+    if (d.recupAuto && !r.finSeance && !ui.modal && depuis >= 1) finRecup();
   }
 }
 
@@ -473,6 +478,8 @@ export const actions = {
     return false;
   },
   'terminer-seance'() { terminer(); return false; },
+  // Finir avant la fin (départ de la salle) : ce qui est fait est enregistré, le reste ignoré.
+  'fin-anticipee'() { ui.modal = { type: 'fin-anticipee' }; },
   // --- Douleur ou gêne (prévenir seulement : rien d'autre ne change) ---
   gene(el) {
     const a = d.alertes[el.dataset.id];

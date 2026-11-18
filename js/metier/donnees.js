@@ -190,33 +190,33 @@ export const EXERCICES = [
     "À genoux, corde derrière la tête. Enroule le buste vers le sol, les hanches ne bougent pas."),
 
   // ---------- Haltérophilie (charge en % du record) ----------
-  x('arrache', 'Arraché', 'Haltérophilie', 'haltero', 'Corps entier · vitesse', 'barre', 1, 'arrache', [5, 2, 2, 150],
+  x('arrache', 'Snatch', 'Haltérophilie', 'haltero', 'Corps entier · vitesse', 'barre', 1, 'arrache', [5, 2, 2, 150],
     "Barre près du corps, extension complète des hanches avant de passer sous la barre. Réception bras verrouillés.",
-    { type: 'haltero', pcts: [50, 70, 75, 75, 75] }),
-  x('arrache-suspension', 'Arraché depuis les hanches', 'Haltérophilie', 'haltero', 'Technique · vitesse', 'barre', 1, 'arrache-hang', [4, 3, 3, 120],
+    { type: 'haltero', pcts: [50, 70, 75, 75, 75], alias: ['arrache'] }),
+  x('arrache-suspension', 'Hang snatch', 'Haltérophilie', 'haltero', 'Technique · vitesse', 'barre', 1, 'arrache-hang', [4, 3, 3, 120],
     "Départ barre aux hanches, genoux fléchis. Extension explosive et passe sous la barre rapidement.",
-    { type: 'haltero', pcts: [50, 60, 65, 70] }),
-  x('epaule-jete', 'Épaulé-jeté', 'Haltérophilie', 'haltero', 'Corps entier · vitesse', 'barre', 1, 'epaule-jete', [5, 1, 1, 150],
+    { type: 'haltero', pcts: [50, 60, 65, 70], alias: ['arrache depuis les hanches', 'arrache suspension'] }),
+  x('epaule-jete', 'Clean & jerk', 'Haltérophilie', 'haltero', 'Corps entier · vitesse', 'barre', 1, 'epaule-jete', [5, 1, 1, 150],
     "Épaulé : coudes rapides vers l'avant. Jeté : petite flexion, poussée des jambes, fente sous la barre.",
-    { type: 'haltero', pcts: [50, 70, 75, 80, 80] }),
-  x('power-clean', 'Power clean (épaulé)', 'Haltérophilie', 'haltero', 'Corps entier · puissance', 'barre', 1, 'epaule', [5, 2, 2, 120],
+    { type: 'haltero', pcts: [50, 70, 75, 80, 80], alias: ['epaule-jete', 'epaule jete'] }),
+  x('power-clean', 'Power clean', 'Haltérophilie', 'haltero', 'Corps entier · puissance', 'barre', 1, 'epaule', [5, 2, 2, 120],
     "Tire la barre en restant collé, réception en quart de squat, coudes hauts devant.",
-    { type: 'haltero', pcts: [50, 65, 70, 75, 75] }),
-  x('tirage-arrache', "Tirage d'arraché", 'Haltérophilie', 'haltero', 'Dos · jambes · trapèzes', 'barre', 1, 'tirage-olympique', [4, 3, 3, 120],
+    { type: 'haltero', pcts: [50, 65, 70, 75, 75], alias: ['power clean (epaule)', 'epaule'] }),
+  x('tirage-arrache', 'Snatch pull', 'Haltérophilie', 'haltero', 'Dos · jambes · trapèzes', 'barre', 1, 'tirage-olympique', [4, 3, 3, 120],
     "Prise large. Même départ que l'arraché, finis sur la pointe des pieds en haussant les épaules, bras tendus.",
-    { type: 'haltero', pcts: [70, 80, 85, 90] }),
-  x('tirage-epaule', "Tirage d'épaulé", 'Haltérophilie', 'haltero', 'Dos · jambes · trapèzes', 'barre', 1, 'tirage-olympique', [4, 3, 3, 120],
+    { type: 'haltero', pcts: [70, 80, 85, 90], alias: ['tirage d\'arrache'] }),
+  x('tirage-epaule', 'Clean pull', 'Haltérophilie', 'haltero', 'Dos · jambes · trapèzes', 'barre', 1, 'tirage-olympique', [4, 3, 3, 120],
     "Prise d'épaulé. Pousse le sol, barre collée, extension complète et haussement d'épaules.",
-    { type: 'haltero', pcts: [70, 80, 85, 90] }),
-  x('squat-avant', 'Squat avant', 'Haltérophilie', 'haltero', 'Quadriceps · gainage', 'barre', 1, 'squat-avant', [4, 4, 4, 150],
+    { type: 'haltero', pcts: [70, 80, 85, 90], alias: ['tirage d\'epaule'] }),
+  x('squat-avant', 'Front squat', 'Haltérophilie', 'haltero', 'Quadriceps · gainage', 'barre', 1, 'squat-avant', [4, 4, 4, 150],
     "Barre sur l'avant des épaules, coudes hauts. Descends droit et profond, remonte sans pencher le buste.",
-    { type: 'haltero', pcts: [60, 70, 75, 80] }),
-  x('squat-arriere', 'Squat arrière (haltéro)', 'Haltérophilie', 'haltero', 'Quadriceps · fessiers', 'barre', 1, 'squat', [4, 4, 4, 150],
+    { type: 'haltero', pcts: [60, 70, 75, 80], alias: ['squat avant'] }),
+  x('squat-arriere', 'Back squat', 'Haltérophilie', 'haltero', 'Quadriceps · fessiers', 'barre', 1, 'squat', [4, 4, 4, 150],
     "Barre haute sur les trapèzes, buste droit, descente complète. Remontée rapide.",
-    { type: 'haltero', pcts: [60, 70, 75, 80] }),
-  x('overhead-squat', 'Squat bras tendus', 'Haltérophilie', 'haltero', 'Stabilité · mobilité', 'barre', 1, 'arrache', [3, 3, 3, 120],
+    { type: 'haltero', pcts: [60, 70, 75, 80], alias: ['squat arriere (haltero)', 'squat arriere'] }),
+  x('overhead-squat', 'Overhead squat', 'Haltérophilie', 'haltero', 'Stabilité · mobilité', 'barre', 1, 'arrache', [3, 3, 3, 120],
     "Barre au-dessus de la tête, prise d'arraché. Descends lentement en poussant la barre vers le plafond.",
-    { type: 'haltero', pcts: [50, 55, 60] }),
+    { type: 'haltero', pcts: [50, 55, 60], alias: ['squat bras tendus'] }),
   x('push-press', 'Push press', 'Haltérophilie', 'haltero', 'Épaules · jambes', 'barre', 1, 'push-press', [4, 3, 3, 120],
     "Petite flexion des genoux puis poussée des jambes pour lancer la barre, finis bras verrouillés.",
     { type: 'haltero', pcts: [60, 70, 75, 75] }),
@@ -303,4 +303,14 @@ export function exoDepuisNom(nom) {
     if (normaliser(e.nom) === n || e.alias.includes(n)) return e;
   }
   return null;
+}
+
+/**
+ * Vrai si l'exercice correspond à la recherche : nom, muscles, groupe et autres noms
+ * (les noms français des mouvements d'haltérophilie, par exemple « arraché » pour Snatch).
+ */
+export function correspond(def, recherche) {
+  const q = normaliser(recherche);
+  if (!q) return true;
+  return normaliser(`${def.nom} ${def.muscles} ${def.groupe} ${def.alias.join(' ')}`).includes(q);
 }

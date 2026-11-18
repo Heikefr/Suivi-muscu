@@ -10,6 +10,7 @@ import { fusionner, importerCsv } from '../metier/import.js';
 import { valider, vide } from '../metier/stockage.js';
 import { CATEGORIES_RECUP, RECUP_MAX, RECUP_MIN, RECUP_PAS, recupCategorie } from '../metier/conseils.js';
 import { aujourdhui, dateLongue, esc, mmss } from '../outils.js';
+import { blocSemaineType } from './planning.js';
 
 export function ecranReglages() {
   const nbS = d.historique.length;
@@ -38,8 +39,16 @@ export function ecranReglages() {
         <div class="stepper"><button data-action="recup-cat" data-c="${c.id}" data-d="-1" aria-label="${esc(c.nom)} : plus court">−</button><div class="val">${mmss(v)}</div><button data-action="recup-cat" data-c="${c.id}" data-d="1" aria-label="${esc(c.nom)} : plus long">+</button></div>
       </div>`;
   }).join('')}
+      <div class="ligne-recup">
+        <span class="pile u-ecart-2 u-flex-1"><span class="u-gras-600 u-t-15">À la fin de la récup</span><span class="petit">${d.recupAuto ? 'L\'écran de l\'exercice revient tout seul.' : 'L\'écran reste sur la récup : touche « Passer la récup ».'}</span></span>
+        <div class="segment segment-court">
+          <button class="${d.recupAuto ? 'on' : ''}" data-action="recup-auto" data-v="1" aria-pressed="${d.recupAuto}">Auto</button>
+          <button class="${d.recupAuto ? '' : 'on'}" data-action="recup-auto" data-v="0" aria-pressed="${!d.recupAuto}">Manuel</button>
+        </div>
+      </div>
       ${Object.keys(d.recupCat).length || Object.keys(d.recupExo).length ? `<button class="btn-lien" data-action="recup-defaut">Revenir à la règle partout${Object.keys(d.recupExo).length ? ` (dont ${Object.keys(d.recupExo).length} exercice${Object.keys(d.recupExo).length > 1 ? 's' : ''} réglé${Object.keys(d.recupExo).length > 1 ? 's' : ''} à part)` : ''}</button>` : ''}
     </div>
+    ${blocSemaineType()}
     <div class="carte pile">
       <div class="u-gras-600">Rappel de sauvegarde</div>
       <div class="puces">${[[7, 'Chaque semaine'], [30, 'Chaque mois'], [0, 'Jamais']].map(([j, t]) => `<button class="puce ${d.sauvegarde.rappel === j ? 'on' : ''}" data-action="rappel" data-j="${j}" aria-pressed="${d.sauvegarde.rappel === j}">${t}</button>`).join('')}</div>
@@ -74,6 +83,9 @@ export async function importerFichier(fichier) {
       d.haltero = { ...v.haltero, ...d.haltero };
       const ids = new Set(d.seancesPerso.map((s) => s.id));
       d.seancesPerso = [...d.seancesPerso, ...v.seancesPerso.filter((s) => !ids.has(s.id))];
+      const idsC = new Set(d.circuits.map((c) => c.id));
+      d.circuits = [...d.circuits, ...v.circuits.filter((c) => !idsC.has(c.id))];
+      if (!Object.keys(d.semaineType).length) d.semaineType = v.semaineType;
     } else {
       ({ seances, inconnus } = importerCsv(texte));
     }
@@ -102,6 +114,7 @@ export const actions = {
     return false;
   },
   rappel(el) { d.sauvegarde.rappel = Number(el.dataset.j); enregistrer(); },
+  'recup-auto'(el) { d.recupAuto = el.dataset.v === '1'; enregistrer(); },
   'recup-cat'(el) {
     const c = el.dataset.c;
     const v = recupCategorie(c, d.recupCat) + Number(el.dataset.d) * RECUP_PAS;

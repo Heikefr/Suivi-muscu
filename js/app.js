@@ -12,22 +12,25 @@
 // =====================================================================
 
 import { ecranAccueil } from './ecrans/accueil.js';
+import { actions as actionsCircuit, ecranCircuit } from './ecrans/circuit.js';
 import { actions as actionsComposition, ecranComposer, ecranPerso, majPerso } from './ecrans/composition.js';
 import { actions as actionsHyroxSeance, ecranHyroxFin, ecranHyroxSeance, ticHyrox } from './ecrans/hyrox-seance.js';
 import {
   actions as actionsHyrox, ecranHyrox, ecranHyroxApercu, ecranHyroxLibre, ecranHyroxProfil,
 } from './ecrans/hyrox.js';
+import { actions as actionsPlanning } from './ecrans/planning.js';
 import {
-  actions as actionsProgression, ecranDetail, ecranExercices, ecranProgression, ecranRecords,
+  actions as actionsProgression, ecranDetail, ecranExercices, ecranProgression, ecranRecords, majExos,
 } from './ecrans/progression.js';
 import { actions as actionsReglages, ecranReglages, importerFichier } from './ecrans/reglages.js';
 import { actions as actionsSeance, ecranExercice, ecranFin, ecranMaSeance, ecranRecup, tic } from './ecrans/seance.js';
 import { d, definirRendu, ui } from './etat.js';
-import { modalHtml } from './fenetres.js';
+import { listeFeuille, modalHtml } from './fenetres.js';
 import { exo } from './metier/donnees.js';
 import { lireTemps, seanceHyrox } from './metier/hyrox.js';
+import { nettoyer } from './metier/planning.js';
 import { demanderPersistance } from './metier/stockage.js';
-import { esc, mmss } from './outils.js';
+import { aujourdhui, esc, mmss } from './outils.js';
 import { garderEcranAllume } from './seance-muscu.js';
 
 const $app = document.getElementById('app');
@@ -51,6 +54,7 @@ function rendre() {
   else if (ui.ecran === 'hyrox-profil') html = ecranHyroxProfil();
   else if (ui.ecran === 'hyrox-apercu' && seanceHyrox(ui.hyroxApercu)) html = ecranHyroxApercu();
   else if (ui.ecran === 'hyrox-libre') html = ecranHyroxLibre(true);
+  else if (ui.ecran === 'circuit' && ui.circuit) html = ecranCircuit();
   else if (ui.ecran === 'hyrox' || ui.ecran === 'hyrox-seance') { ui.ecran = 'hyrox'; html = ecranHyrox(); }
   else { ui.ecran = 'accueil'; html = ecranAccueil(); }
   const scrollFeuille = document.querySelector('.feuille')?.scrollTop || 0;
@@ -58,6 +62,8 @@ function rendre() {
   const f = document.querySelector('.feuille');
   if (f && ui.modalGardeScroll) f.scrollTop = scrollFeuille;
   ui.modalGardeScroll = false;
+  // Retour à une liste : on retrouve l'endroit où l'on était (onglet Exercices).
+  if (ui.restaurerScroll != null) { window.scrollTo(0, ui.restaurerScroll); ui.restaurerScroll = null; }
   if (ui.ecran === 'recup') tic();
   if (ui.ecran === 'hyrox-seance') ticHyrox();
 }
@@ -80,17 +86,19 @@ document.addEventListener('visibilitychange', () => {
 const actionsNavigation = {
   onglet(el) {
     ui.ecran = { seances: 'accueil', hyrox: 'hyrox', progression: 'progression', exercices: 'exercices' }[el.dataset.id] || 'accueil';
+    if (ui.ecran === 'accueil') ui.semaine = 0;
     ui.modal = null;
+    ui.planHyrox = null;
     window.scrollTo(0, 0);
   },
-  ecran(el) { ui.ecran = el.dataset.id; window.scrollTo(0, 0); },
+  ecran(el) { ui.ecran = el.dataset.id; ui.modal = null; window.scrollTo(0, 0); },
   fermer() { ui.modal = null; },
   voile(el, ev) { if (ev.target === el) ui.modal = null; else return false; },
 };
 
 const actions = {
   ...actionsNavigation, ...actionsComposition, ...actionsSeance, ...actionsProgression,
-  ...actionsReglages, ...actionsHyrox, ...actionsHyroxSeance,
+  ...actionsReglages, ...actionsHyrox, ...actionsHyroxSeance, ...actionsPlanning, ...actionsCircuit,
 };
 
 $app.addEventListener('click', (ev) => {
@@ -117,6 +125,16 @@ $app.addEventListener('input', (ev) => {
     ui.perso.q = ev.target.value;
     majPerso();
   }
+  // Recherche dans une fenêtre (choix d'exercice…) ou dans l'onglet Exercices : seule la liste change.
+  if (el.id === 'recherche-feuille' && ui.modal) {
+    ui.modal.q = el.value;
+    const liste = document.getElementById('liste-feuille');
+    if (liste) liste.innerHTML = listeFeuille(ui.modal);
+  }
+  if (el.id === 'recherche-exos') {
+    ui.qExos = el.value;
+    majExos();
+  }
 });
 
 $app.addEventListener('change', (ev) => {
@@ -131,6 +149,7 @@ $app.addEventListener('change', (ev) => {
 // ---------- Démarrage ----------
 
 demanderPersistance();
+nettoyer(d, aujourdhui());
 if (d.enCours) {
   ui.ecran = d.enCours.recup ? 'recup' : 'exercice';
   garderEcranAllume();

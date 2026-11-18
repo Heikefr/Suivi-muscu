@@ -70,3 +70,14 @@ test('haltéro : reps ratées → on baisse ; record inconnu → estimé', () =>
   assert.equal(e.record, 50);
   assert.equal(e.recordBattu, false);
 });
+
+test('noms anglais en haltérophilie, recherche aussi en français', async () => {
+  const { EXERCICES: tous, correspond } = await import('../js/metier/donnees.js');
+  assert.equal(exo('squat-avant').nom, 'Front squat');
+  assert.equal(exo('arrache').nom, 'Snatch');
+  const trouve = (q) => tous.filter((e) => correspond(e, q)).map((e) => e.id);
+  assert.ok(trouve('arraché').includes('arrache'));
+  assert.ok(trouve('squat avant').includes('squat-avant'));
+  assert.ok(trouve('front').includes('squat-avant'));
+  assert.ok(trouve('').length === tous.length);
+});

@@ -63,6 +63,16 @@ export const ICONES = {
   exercices: '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h14M4 11h14M4 16h14"></path></svg>',
   hyrox: '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="12" r="7"></circle><path d="M11 12V8.5M9 2.5h4M16.5 5.5l1.5-1.5"></path></svg>',
   tuiles: '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"></rect><rect x="11" y="3" width="6" height="6" rx="1.5"></rect><rect x="3" y="11" width="6" height="6" rx="1.5"></rect><rect x="11" y="11" width="6" height="6" rx="1.5"></rect></svg>',
+  signet: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v16l-5-4-5 4z"></path></svg>',
+  lecture: '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5l11 7-11 7z"></path></svg>',
+  boucle: '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"></path></svg>',
+  calendrier: '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>',
+  haltere: '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"></path></svg>',
+  ajout: '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>',
+  bas: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>',
+  gauche: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>',
+  droite: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>',
+  monter: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"></path></svg>',
   loupe: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--doux)" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="5"></circle><path d="M12 12l4 4"></path></svg>',
 };
 
@@ -98,7 +108,7 @@ const LOGO_HYROX = `<svg aria-hidden="true" width="38" height="38" viewBox="0 0 
   <circle cx="37" cy="27.5" r="7" fill="currentColor" stroke="none"></circle>
 </svg>`;
 
-/** Pastille de couleur avec le logo de l'univers : 'muscu' ou 'hyrox'. */
+/** Pastille de couleur avec le logo de l'univers : 'muscu', 'hyrox' ou 'appli' (haltère sur fond jaune, comme l'icône). */
 export function pastille(univers) {
-  return `<span class="pastille">${univers === 'hyrox' ? LOGO_HYROX : LOGO_MUSCU}</span>`;
+  return `<span class="pastille ${univers === 'appli' ? 'pastille-appli' : ''}">${univers === 'hyrox' ? LOGO_HYROX : LOGO_MUSCU}</span>`;
 }

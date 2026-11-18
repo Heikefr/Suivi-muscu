@@ -9,10 +9,22 @@ import { ICONES, cibleTexte, estHaltero, infoExo } from '../commun.js';
 import { composer, dureeEstimee, prochaineSeance } from '../composition.js';
 import { d, enregistrer, rendre, toast, ui } from '../etat.js';
 import { illustration } from '../illustrations.js';
-import { EXERCICES, FAMILLES, GROUPES, cibleFinale, exo, normaliser, seance } from '../metier/donnees.js';
+import { EXERCICES, FAMILLES, GROUPES, cibleFinale, correspond, exo, seance } from '../metier/donnees.js';
+import { definirCompo } from '../metier/planning.js';
 import { derniereDate } from '../metier/progression.js';
-import { esc, joursDepuis } from '../outils.js';
+import { dateLongue, esc, identifiant, joursDepuis } from '../outils.js';
 import { demarrer } from '../seance-muscu.js';
+
+/**
+ * Lance une séance de muscu enregistrée. Une séance composée à partir de Push / Pull / Jambes
+ * (champ base) compte comme cette séance pour la rotation conseillée.
+ * @param plan  identifiant de la séance prévue au planning, si elle est lancée depuis le planning
+ */
+export function demarrerPerso(s, plan = null) {
+  if (!s) return;
+  const items = s.exercices.filter((id) => exo(id)).map((id) => ({ exo: id, cible: s.cibles?.[id] || exo(id).cible }));
+  demarrer(s.base || `perso:${s.id}`, s.nom, items, { plan, enregistree: s.id });
+}
 
 /** Écran « Composer ta séance ». */
 export function ecranComposer() {
@@ -36,21 +48,26 @@ export function ecranComposer() {
     </div>`;
   }).join('');
   const liste = c.cases.map((k) => ({ exo: k.exo, cible: cibleFinale(exo(k.exo), k.cible) }));
+  const n = c.cases.length;
+  const bas = c.avance
+    ? `<button class="btn-principal" data-action="compo-avance-ok" ${n ? '' : 'disabled'}>Enregistrer pour ${esc(dateLongue(c.avance.date).split(' ').slice(0, 2).join(' '))}</button>`
+    : `<div class="ligne u-ecart-10">
+        <button class="btn-secondaire u-l-auto u-pad-0-16 u-h-60" data-action="enregistrer-compo" ${n ? '' : 'disabled'}>Enregistrer</button>
+        <button class="btn-principal" data-action="go-compo" ${n ? '' : 'disabled'}>Démarrer · ${dureeEstimee(liste)} min</button>
+      </div>`;
   return `<main class="ecran">
     <div class="ligne">
       <button class="btn-icone" data-action="onglet" data-id="seances" aria-label="Retour">${ICONES.retour}</button>
-      <div class="pile u-flex-1 u-ecart-2"><div class="sur-titre">Composer ta séance</div><h1 class="u-t-26">${esc(s.nom)}</h1></div>
+      <div class="pile u-flex-1 u-ecart-2"><div class="sur-titre">${c.avance ? 'Prévoir les exercices' : 'Composer ta séance'}</div><h1 class="u-t-26">${esc(s.nom)}</h1></div>
     </div>
-    <div class="puces">${puce('suggestion', 'Suggestion')}${puce('derniere', 'Comme la dernière fois')}${puce('courte', 'Courte')}</div>
-    <div class="petit">Touche une tuile pour changer l'exercice. Tu pourras revenir à cette vue pendant la séance.</div>
+    <div class="puces">${c.mode === 'prevue' ? puce('prevue', 'Prévue à l\'avance') : ''}${puce('suggestion', 'Suggestion')}${puce('derniere', 'Comme la dernière fois')}${puce('courte', 'Courte')}</div>
+    <div class="petit">${c.avance ? 'Choisis tes exercices maintenant : le poids conseillé sera calculé le jour de la séance.' : 'Touche une tuile pour changer l\'exercice. Tu pourras revenir à cette vue pendant la séance.'}</div>
     <div class="tuiles">
       ${items}
       <button class="tuile ajout" data-action="choix" data-i="-1"><span class="carre-plus">${ICONES.plus}</span><span class="nom">Ajouter un exercice</span></button>
     </div>
     <div class="pousse"></div>
-    <div class="barre-action">
-      <button class="btn-principal" data-action="go-compo" ${c.cases.length ? '' : 'disabled'}>Démarrer · ${c.cases.length} exercice${c.cases.length > 1 ? 's' : ''} · ${dureeEstimee(liste)} min</button>
-    </div>
+    <div class="barre-action">${bas}</div>
   </main>`;
 }
 
@@ -90,9 +107,8 @@ function lignePerso(id) {
 /** Liste filtrée par la recherche et le groupe choisi. */
 function listePerso() {
   const p = ui.perso;
-  const q = normaliser(p.q);
-  const garde = (e) => !d.exclus.includes(e.id) && (p.filtre === 'tous' || e.famille === p.filtre)
-    && (!q || normaliser(`${e.nom} ${e.muscles} ${e.groupe}`).includes(q));
+  const q = (p.q || '').trim();
+  const garde = (e) => !d.exclus.includes(e.id) && (p.filtre === 'tous' || e.famille === p.filtre) && correspond(e, q);
   let html = '';
   if (!q && p.filtre === 'tous') {
     const sug = suggestionsPerso();
@@ -143,9 +159,15 @@ export function majPerso() {
 
 /** Actions des boutons de ce fichier (attribut data-action dans le HTML). */
 export const actions = {
-  composer(el) { composer(el.dataset.id); ui.ecran = 'composer'; window.scrollTo(0, 0); },
-  mode(el) { composer(ui.compo.seance, el.dataset.id); },
-  choix(el) { ui.modal = { type: 'choix', i: Number(el.dataset.i) }; },
+  composer(el) { composer(el.dataset.id); ui.modal = null; ui.ecran = 'composer'; window.scrollTo(0, 0); },
+  mode(el) {
+    if (el.dataset.id === 'prevue') return false;
+    // Garde le lien avec le planning (séance prévue, ou exercices choisis à l'avance).
+    const { plan, avance } = ui.compo;
+    composer(ui.compo.seance, el.dataset.id);
+    Object.assign(ui.compo, { plan, avance });
+  },
+  choix(el) { ui.modal = { type: 'choix', i: Number(el.dataset.i), q: '' }; },
   choisir(el) {
     const i = Number(el.dataset.i);
     const def = exo(el.dataset.id);
@@ -156,12 +178,39 @@ export const actions = {
   retirer(el) { ui.compo.cases.splice(Number(el.dataset.i), 1); },
   'go-compo'() {
     const s = seance(ui.compo.seance);
-    demarrer(s.id, s.nom, ui.compo.cases.map((k) => ({ exo: k.exo, cible: k.cible })));
+    demarrer(s.id, s.nom, ui.compo.cases.map((k) => ({ exo: k.exo, cible: k.cible })), { plan: ui.compo.plan });
+    return false;
+  },
+  // Exercices choisis à l'avance pour une séance du planning.
+  'compo-avance-ok'() {
+    const { date, id } = ui.compo.avance;
+    definirCompo(d, date, id, ui.compo.cases.map((k) => ({ exo: k.exo, cible: k.cible, role: k.role })));
+    enregistrer();
+    ui.compo = null;
+    ui.ecran = 'accueil';
+    ui.modal = { type: 'jour', date };
+    toast('Exercices enregistrés pour ce jour-là');
+    return false;
+  },
+  // Enregistre la séance composée (Push, Pull, Jambes) pour la refaire plus tard.
+  'enregistrer-compo'() { ui.modal = { type: 'enregistrer', quoi: 'compo', nom: `${seance(ui.compo.seance).nom} perso` }; },
+  'enregistrer-compo-ok'() {
+    const c = ui.compo;
+    const nom = (document.getElementById('nom-seance')?.value || '').trim() || `${seance(c.seance).nom} perso`;
+    d.seancesPerso.push({
+      id: identifiant('p'), nom, base: c.seance,
+      exercices: c.cases.map((k) => k.exo),
+      cibles: Object.fromEntries(c.cases.map((k) => [k.exo, cibleFinale(exo(k.exo), k.cible)])),
+    });
+    enregistrer();
+    ui.modal = null;
+    toast('Séance enregistrée dans « Mes séances »');
     return false;
   },
   perso(el) {
     const s = el.dataset.id ? d.seancesPerso.find((x) => x.id === el.dataset.id) : null;
     ui.perso = { sel: s ? s.exercices.filter((id) => exo(id)) : [], filtre: 'tous', q: '', id: s?.id || null, nom: s?.nom || '' };
+    ui.modal = null;
     ui.ecran = 'perso';
     window.scrollTo(0, 0);
   },
@@ -175,11 +224,12 @@ export const actions = {
   filtre(el) { ui.perso.filtre = el.dataset.id; },
   'go-perso'() {
     const p = ui.perso;
-    const items = p.sel.map((id) => ({ exo: id, cible: exo(id).cible }));
-    demarrer(p.id ? `perso:${p.id}` : 'perso', p.nom || 'Séance personnalisée', items);
+    const s = p.id ? d.seancesPerso.find((x) => x.id === p.id) : null;
+    const items = p.sel.map((id) => ({ exo: id, cible: s?.cibles?.[id] || exo(id).cible }));
+    demarrer(s?.base || (p.id ? `perso:${p.id}` : 'perso'), p.nom || 'Séance personnalisée', items, { enregistree: p.id });
     return false;
   },
-  enregistrer() { ui.modal = { type: 'enregistrer' }; },
+  enregistrer() { ui.modal = { type: 'enregistrer', quoi: 'perso', nom: ui.perso.nom || '' }; },
   'enregistrer-ok'() {
     const nom = (document.getElementById('nom-seance')?.value || '').trim() || 'Ma séance';
     const p = ui.perso;
@@ -187,7 +237,7 @@ export const actions = {
       const s = d.seancesPerso.find((x) => x.id === p.id);
       Object.assign(s, { nom, exercices: [...p.sel] });
     } else {
-      p.id = `p${Date.now()}`;
+      p.id = identifiant('p');
       d.seancesPerso.push({ id: p.id, nom, exercices: [...p.sel] });
     }
     p.nom = nom;

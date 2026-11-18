@@ -66,3 +66,8 @@ export function ajouterJours(iso, n) {
   const t = new Date(a, m - 1, j + n);
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
 }
+
+/** Identifiant unique pour une séance ou un circuit enregistré : « p » + date + hasard. */
+export function identifiant(prefixe) {
+  return `${prefixe}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}

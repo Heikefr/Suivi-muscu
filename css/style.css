@@ -6,8 +6,11 @@
   --texte: #F2F3F5;
   --doux: #A0A6B1;
   --gris: #5B616C;
-  --accent: #E8FF47;
-  --accent-doux: #F3FF9A;
+  /* Couleurs des univers : musculation en gris argent, Hyrox en jaune, haltérophilie en orange. */
+  --muscu: #D3D7DE;
+  --hyrox: #FFE500;
+  --accent: var(--muscu);
+  --accent-doux: #E9ECF0;
   --orange: #FFB86B;
   --muscle: #FF3B47;
   --titre: 'Space Grotesk', Inter, system-ui, sans-serif;
@@ -102,11 +105,6 @@ h2 { margin: 0; font-family: var(--titre); font-size: 22px; font-weight: 700; li
 .choix > span:first-child { flex: 1; display: flex; flex-direction: column; gap: 3px; }
 .choix .nom { font-size: 16px; font-weight: 600; }
 .choix.pointille { background: transparent; border-style: dashed; border-color: var(--gris); }
-
-/* Accueil */
-.semaine { display: flex; align-items: center; gap: 12px; }
-.point { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--gris); }
-.point.fait { background: var(--accent); border-color: var(--accent); }
 
 .conseillee {
   background: var(--accent); color: var(--fond);
@@ -203,7 +201,7 @@ button.case { background: var(--carte); border: 1px solid var(--bord); border-ra
 .graph .col.der .v { color: var(--accent); font-weight: 700; }
 .graph .v { font-size: 13px; font-weight: 600; }
 .dates { display: grid; gap: 10px; font-size: 11px; color: var(--doux); text-align: center; }
-.hausse { color: var(--accent); }
+.hausse { color: #7FD88F; }
 .stable { color: var(--orange); }
 .baisse { color: #FF8A80; }
 .choix.selection { border-color: var(--accent); }
@@ -335,19 +333,19 @@ button.conseillee { width: 100%; font-family: inherit; }
 
 /* ---------- Hyrox (0.3) ---------- */
 .theme-hyrox {
-  --accent: #5AC8FA; --accent-doux: #9ADCFB;
-  --fond: #0B1218; --carte: #13202B; --carte2: #1C2E3C; --bord: #22394A;
-  --doux: #9FB3C2; --gris: #3A5568;
+  --accent: var(--hyrox); --accent-doux: #FFF27A;
+  --fond: #11100B; --carte: #1C1A12; --carte2: #27251A; --bord: #36321F;
+  --doux: #B8B29B; --gris: #5F5A43;
   background: var(--fond);
 }
-.theme-hyrox .barre-action { background: linear-gradient(to bottom, rgba(11, 18, 24, 0), var(--fond) 22%); }
+.theme-hyrox .barre-action { background: linear-gradient(to bottom, rgba(17, 16, 11, 0), var(--fond) 22%); }
 .segments { display: grid; gap: 4px; }
 .segments div { height: 6px; border-radius: 3px; background: var(--bord); }
 .segments div.on { background: var(--accent); }
 .barres-h { display: flex; gap: 4px; }
 .barres-h div { height: 4px; border-radius: 2px; background: var(--bord); }
 .barres-h div.fait { background: var(--accent); }
-.barres-h div.encours { background: #2B5A73; }
+.barres-h div.encours { background: #6B6020; }
 .rond-h {
   width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--gris);
   display: flex; align-items: center; justify-content: center;
@@ -447,8 +445,6 @@ button.conseillee { width: 100%; font-family: inherit; }
 .tuile-compo .raison { font-size: 11px; color: var(--accent); line-height: 1.3; }
 .tuile-compo .btn-retirer { position: absolute; top: 6px; right: 6px; }
 
-/* ---------- Classes utilitaires ----------
-   Petits réglages ponctuels (espacement, t
 /* ---------- 0.6 : accueil « Ma semaine », pastilles, exercice compact ---------- */
 .pastille {
   width: 46px; height: 46px; flex-shrink: 0; border-radius: 13px;
@@ -457,33 +453,6 @@ button.conseillee { width: 100%; font-family: inherit; }
 }
 .entete { align-items: center; }
 .entete > div { gap: 2px; }
-.semaine { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; }
-.semaine > div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.semaine .initiale { font-size: 12px; color: var(--doux); }
-.semaine .auj .initiale { color: var(--texte); font-weight: 700; }
-.rond-jour {
-  width: 38px; height: 38px; border-radius: 50%; background: var(--carte); border: 2px solid transparent;
-  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;
-}
-.semaine .auj .rond-jour { border-color: var(--texte); }
-.rond-jour.muscu { background: #E8FF47; color: #0E1013; font-weight: 700; }
-.rond-jour.hyrox { background: #5AC8FA; color: #0B1218; font-weight: 700; }
-.rond-jour.mixte { background: linear-gradient(135deg, #E8FF47 50%, #5AC8FA 50%); color: #0E1013; font-weight: 700; }
-.legende-semaine { display: flex; justify-content: flex-end; gap: 14px; margin-top: -6px; }
-.legende-semaine i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
-.legende-semaine .muscu { background: #E8FF47; }
-.legende-semaine .hyrox { background: #5AC8FA; }
-/* Les deux grandes cartes de l'accueil : jaune (muscu) et bleue (Hyrox). */
-.carte-seance { gap: 6px; padding: 16px; }
-.carte-seance .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.carte-seance .sous { font-size: 13px; font-weight: 500; line-height: 1.35; }
-.carte-seance .boutons { display: flex; gap: 8px; margin-top: 6px; }
-.carte-seance .boutons button {
-  flex: 1; height: 44px; padding: 0 6px; border-radius: 12px; border: 1.5px solid var(--fond);
-  background: transparent; color: var(--fond); font-size: 13px; font-weight: 700; white-space: nowrap;
-}
-.carte-seance .boutons .plein { flex: 2; border: none; background: var(--fond); color: var(--texte); font-size: 14px; }
-.carte-hyrox { --accent: #5AC8FA; --fond: #0B1218; }
 /* Exercice : disposition compacte */
 .exo-tete { display: flex; align-items: center; gap: 12px; }
 .exo-tete .dessin { width: 84px; height: 84px; flex-shrink: 0; border-radius: 14px; background: var(--carte2); display: flex; align-items: center; justify-content: center; }
@@ -511,7 +480,8 @@ button.conseillee { width: 100%; font-family: inherit; }
 .cases-series .encours strong { color: var(--texte); }
 .liens-series { gap: 18px; }
 .liens-series button:disabled { opacity: .35; }
-aille de texte…) utilisés dans les écrans.
+/* ---------- Classes utilitaires ----------
+   Petits réglages ponctuels (espacement, taille de texte…) utilisés dans les écrans.
    Nom = u-<réglage>-<valeur>. Le !important garantit qu'elles passent après les règles du composant. */
 .u-aff-flex { display: flex !important; }
 .u-aligne-center { text-align: center !important; }
@@ -587,3 +557,135 @@ aille de texte…) utilisés dans les écrans.
 /* Tuiles de composition : le badge laisse la place à la croix, la raison tient sur 3 lignes. */
 .tuile-compo .badge { padding-right: 44px; }
 .tuile-compo .raison { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ---------- 0.8 : accueil en tuiles, planning, circuits, couleurs ---------- */
+.u-h-52 { height: 52px !important; }
+.pastille-appli { background: var(--hyrox); color: #0E1013; }
+.btn-mini {
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; border: 1px solid var(--bord);
+  background: var(--carte); color: var(--texte); display: flex; align-items: center; justify-content: center; padding: 0;
+}
+
+/* Semaine : faite = rond plein, prévue = cercle, pas faite = pointillé */
+.nav-semaine { gap: 8px; }
+.semaine { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.semaine .jour {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: transparent; border: none; padding: 2px 0; min-height: 44px; color: var(--texte);
+}
+.semaine .initiale { font-size: 12px; color: var(--doux); }
+.semaine .auj .initiale { color: var(--texte); font-weight: 700; }
+.rond-jour {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--carte); border: 2px solid var(--carte);
+  display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: var(--doux);
+}
+.rond-jour.muscu { background: var(--muscu); border-color: var(--muscu); color: #0E1013; font-weight: 700; }
+.rond-jour.hyrox { background: var(--hyrox); border-color: var(--hyrox); color: #0E1013; font-weight: 700; }
+.rond-jour.mixte { background: linear-gradient(135deg, var(--muscu) 50%, var(--hyrox) 50%); border-color: transparent; color: #0E1013; font-weight: 700; }
+.rond-jour.prevu-muscu { background: transparent; border-color: var(--muscu); color: var(--texte); }
+.rond-jour.prevu-hyrox { background: transparent; border-color: var(--hyrox); color: var(--texte); }
+.rond-jour.prevu-mixte { background: transparent; border-color: var(--muscu); box-shadow: 0 0 0 2px var(--hyrox); color: var(--texte); }
+.rond-jour.pas-faite { background: transparent; border: 2px dashed var(--gris); color: var(--doux); }
+.semaine .point-auj { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.semaine .auj .point-auj { background: var(--texte); }
+.semaine .auj .rond-jour:not(.muscu):not(.hyrox):not(.mixte) { color: var(--texte); }
+.legende-semaine { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12px; }
+.legende-semaine i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+.legende-semaine .muscu { background: var(--muscu); }
+.legende-semaine .hyrox { background: var(--hyrox); }
+
+/* Séance en cours et séances prévues aujourd'hui */
+.en-cours { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; color: #0E1013; }
+.en-cours.muscu { background: var(--muscu); }
+.en-cours.hyrox { background: var(--hyrox); }
+.en-cours .label { font-size: 11px; }
+.en-cours .titre { font-family: var(--titre); font-size: 22px; font-weight: 700; line-height: 1.1; }
+.en-cours .petit { color: #3A3F47; }
+.en-cours button { height: 48px; padding: 0 18px; border-radius: 14px; border: none; background: #0E1013; color: var(--texte); font-weight: 700; font-size: 15px; }
+.aujourdhui .label { color: var(--doux); }
+.etiquette {
+  flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 7px; border-radius: 7px; color: #0E1013;
+}
+.etiquette.muscu { background: var(--muscu); }
+.etiquette.hyrox { background: var(--hyrox); }
+.btn-demarrer { height: 44px; padding: 0 16px; border-radius: 12px; border: none; font-weight: 700; font-size: 14px; color: #0E1013; }
+.btn-demarrer.muscu { background: var(--muscu); }
+.btn-demarrer.hyrox { background: var(--hyrox); }
+
+/* Grille de l'accueil (maquette 3) */
+.grille-accueil { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tuile-a {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 8px; text-align: left;
+  min-height: 124px; padding: 14px; border-radius: 18px; border: 1px solid #3A3F47;
+  background: var(--carte2); color: var(--texte); font-family: inherit;
+}
+.tuile-a .haut { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+.tuile-a .bas { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tuile-a .titre { font-family: var(--titre); font-size: 22px; font-weight: 700; line-height: 1.1; }
+.tuile-a .sous { font-size: 12px; color: var(--doux); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tuile-a .badge-a {
+  font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 7px; background: #0E1013; color: var(--muscu);
+}
+.tuile-a.plein { background: var(--muscu); border-color: var(--muscu); color: #0E1013; }
+.tuile-a.plein .sous { color: #3A3F47; }
+.tuile-a.hyrox { background: var(--hyrox); border-color: var(--hyrox); color: #0E1013; }
+.tuile-a.hyrox .sous { color: #4A4300; }
+.tuile-a.hyrox-contour { background: var(--carte); border-color: var(--hyrox); color: var(--hyrox); }
+.tuile-a.hyrox-contour .sous { color: #CFC27A; }
+.tuile-a:disabled { opacity: .4; }
+.ligne-mes-seances {
+  display: flex; align-items: center; gap: 10px; width: 100%; height: 54px; padding: 0 16px;
+  border-radius: 14px; background: var(--carte); border: 1px solid #3A3F47; font-size: 15px; font-weight: 600; text-align: left;
+}
+
+/* Séance en cours : bouton « Terminer » visible en haut */
+.btn-terminer {
+  height: 44px; padding: 0 12px; flex-shrink: 0; border-radius: 12px;
+  background: transparent; border: 1.5px solid var(--accent); color: var(--accent); font-size: 14px; font-weight: 700;
+}
+
+/* Fenêtre d'un jour, planning */
+.prevu.pas-faite { border-style: dashed; }
+.boutons-prevu { display: flex; gap: 8px; }
+.boutons-prevu .btn-secondaire { flex: 1; height: 44px; font-size: 14px; padding: 0 6px; }
+.ligne-seance { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; background: var(--carte2); border: 1px solid var(--bord); }
+.lien-seance { display: flex; flex-direction: column; gap: 2px; text-align: left; background: transparent; border: none; padding: 0; min-height: 44px; justify-content: center; min-width: 0; }
+.lien-seance .nom { font-size: 16px; font-weight: 700; }
+.btn-lancer { width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; border: none; color: #0E1013; display: flex; align-items: center; justify-content: center; }
+.btn-lancer.muscu { background: var(--muscu); }
+.btn-lancer.hyrox { background: var(--hyrox); }
+.ligne-type { display: flex; align-items: center; gap: 10px; min-height: 52px; border-top: 1px solid var(--bord); padding-top: 6px; }
+.ligne-type .jour { width: 40px; font-size: 14px; font-weight: 600; color: var(--doux); }
+.puces-type { display: flex; flex-wrap: wrap; gap: 6px; }
+.puce-prevue {
+  display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 2px 0 10px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; color: #0E1013;
+}
+.puce-prevue.muscu { background: var(--muscu); }
+.puce-prevue.hyrox { background: var(--hyrox); }
+.puce-prevue button { width: 30px; height: 30px; border: none; background: transparent; color: #0E1013; display: flex; align-items: center; justify-content: center; padding: 0; }
+.btn-icone.petit-plus { width: 40px; height: 40px; }
+.segment-court { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 150px; flex-shrink: 0; }
+.segment-court button { height: 38px; font-size: 13px; }
+
+/* Circuit libre */
+.etape-circuit { display: flex; align-items: center; gap: 8px; }
+.etape-circuit .corps {
+  flex: 1; display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 8px 12px; text-align: left; min-width: 0;
+  border-radius: 14px; background: var(--carte); border: 1px solid var(--bord);
+}
+.etape-circuit.repos .corps { background: transparent; border-style: dashed; }
+.etape-circuit .num { width: 18px; font-size: 13px; font-weight: 700; color: var(--accent); }
+.etape-circuit .txt { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.etape-circuit .nom { font-size: 15px; font-weight: 600; }
+.etape-circuit .btn-mini { width: 44px; height: 44px; }
+.grille-stations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tuile-station {
+  display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 8px 10px; text-align: left;
+  border-radius: 14px; background: var(--carte2); border: 1px solid var(--bord); font-size: 14px; font-weight: 600; line-height: 1.2;
+}
+.stepper .val.val-large { min-width: 96px; }
+/* Dans une fenêtre qui défile, rien ne doit se tasser (champ de recherche, boutons). */
+.feuille > * { flex-shrink: 0; }
