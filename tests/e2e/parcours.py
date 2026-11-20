@@ -42,27 +42,30 @@ def photo(pg, nom):
     pg.screenshot(path=f'{SORTIE}/{n}.png', full_page=True)
 
 
+def un_pas(pg):
+    """Fait avancer la séance d'un geste (valider, passer la récup, choisir une charge…)."""
+    if pg.locator('[data-action="terminer-seance"]').count():
+        pg.click('[data-action="terminer-seance"]')
+    elif pg.locator('[data-action="chauffe-passer"]').count():
+        pg.click('[data-action="chauffe-passer"]')
+    elif pg.locator('.feuille').count():
+        for _ in range(4):
+            pg.click('.feuille [aria-label="Plus lourd"]')
+        pg.click('.feuille >> text=OK')
+    elif pg.locator('#temps').count():
+        pg.click('[data-action="fin-recup"]')
+    elif pg.locator('.choix-reps').count():
+        pg.click('.choix-reps button.on')
+    else:
+        pg.click('[data-action="valider"]')
+
+
 def finir_seance(pg):
     """Valide toutes les séries jusqu'à l'écran de fin."""
     for _ in range(120):
         if pg.locator('text=Séance terminée').count():
             return
-        if pg.locator('[data-action="terminer-seance"]').count():
-            pg.click('[data-action="terminer-seance"]')
-            continue
-        if pg.locator('[data-action="chauffe-passer"]').count():
-            pg.click('[data-action="chauffe-passer"]')
-            continue
-        if pg.locator('.feuille').count():
-            for _ in range(4):
-                pg.click('.feuille [aria-label="Plus lourd"]')
-            pg.click('.feuille >> text=OK')
-        elif pg.locator('#temps').count():
-            pg.click('[data-action="fin-recup"]')
-        elif pg.locator('.choix-reps').count():
-            pg.click('.choix-reps button.on')
-        else:
-            pg.click('[data-action="valider"]')
+        un_pas(pg)
     raise RuntimeError('séance non terminée')
 
 
@@ -142,6 +145,21 @@ with sync_playwright() as p:
     pg.wait_for_selector('text=Valider la série 1')
     pg.click('[data-action="ajout-serie"]')
     photo(pg, 'exercice')
+    # Poids tapé au clavier (disques de 1,25 kg)
+    pg.click('.reglage .valeur-saisie')
+    pg.fill('#saisie-valeur', '21,25')
+    photo(pg, 'saisie-charge')
+    pg.press('#saisie-valeur', 'Enter')
+    if not pg.locator('.reglage .valeur-saisie:has-text("21,25 kg")').count():
+        erreurs.append('poids tapé : 21,25 kg non affiché')
+    # Machine prise : un autre exercice de la séance, puis on revient
+    pg.click('.btn-machine')
+    photo(pg, 'machine-prise')
+    pg.click('.feuille .tuile-suivant >> nth=0')
+    if pg.locator('h1:has-text("Tirage vertical")').count():
+        erreurs.append('machine prise : exercice non changé')
+    pg.click('[aria-label="Ma séance : tous les exercices"]')
+    pg.click('.tuile[data-i="0"]')
     pg.click('[data-action="note"]')
     pg.fill('#note-texte', 'Siège cran 4')
     pg.click('[data-action="note-ok"]')
@@ -205,7 +223,16 @@ with sync_playwright() as p:
     pg.click('[data-action="chauffe-passer"]')
     pg.wait_for_selector('.choix-reps')
     photo(pg, 'haltero-sans-record')
-    pg.click('.choix-reps button.on')
+    pg.click('.lien-chiffre')
+    pg.fill('#saisie-valeur', '41,5')
+    pg.click('.feuille [data-action="saisie-ok"]')
+    photo(pg, 'haltero-charge-tapee')
+    # Jusqu'à la fin du premier exercice : choix du suivant pendant la récup
+    for _ in range(40):
+        if pg.locator('.tuile-suivant').count():
+            break
+        un_pas(pg)
+    photo(pg, 'recup-choisir-suivant')
     finir_seance(pg)
     photo(pg, 'haltero-fin')
     pg.click("text=Retour à l'accueil")
@@ -222,7 +249,10 @@ with sync_playwright() as p:
     pg.click('[data-action="c-etape-ok"]')
     pg.click('[data-action="etape-ajout"]')
     pg.click('[data-action="etape-type"][data-t="wallBalls"]')
-    pg.click('.feuille [aria-label="Plus lourd"]')
+    pg.click('.feuille .val-saisie')
+    pg.fill('#saisie-valeur', '6,5')
+    pg.click('.feuille [data-action="saisie-ok"]')
+    photo(pg, 'circuit-charge-tapee')
     pg.click('[data-action="c-etape-ok"]')
     pg.click('[data-action="etape-ajout"]')
     pg.click('[data-action="etape-type"][data-t="muscu"]')

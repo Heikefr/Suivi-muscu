@@ -87,9 +87,10 @@ export function chargeSerie(e, i) {
 /** Index du prochain exercice qui a encore des séries à faire, ou -1 si tout est fait. */
 export function prochainIndex(depuis) {
   const ex = d.enCours.exercices;
-  for (let k = 1; k <= ex.length; k++) {
-    const i = (depuis + k) % ex.length;
-    if (ex[i].series.length < ex[i].cible.series) return i;
+  // Le premier exercice pas fini dans l'ordre de la séance : un exercice laissé de côté
+  // (machine prise) revient donc juste après celui fait à sa place.
+  for (let i = 0; i < ex.length; i++) {
+    if (i !== depuis && ex[i].series.length < ex[i].cible.series) return i;
   }
   return -1;
 }

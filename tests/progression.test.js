@@ -56,3 +56,11 @@ test('tendance', () => {
   assert.equal(tendance([p(22), p(22), p(22), p(22)]), 'stable');
   assert.equal(tendance([p(60), p(55)]), 'baisse');
 });
+
+test('poids tapé avec des disques de 1,25 kg : le conseil garde les centièmes', () => {
+  // Barre : 21,25 kg réussis partout → +2,5 kg = 23,75 kg (et non 23,8).
+  const r = suggestion(exo('dc-barre'), cible, [s('2026-11-01', 'dc-barre', [10, 10, 10], 21.25)]);
+  assert.equal(r.charge, 23.75);
+  const meme = suggestion(exo('dc-barre'), cible, [s('2026-11-01', 'dc-barre', [8, 8, 7], 21.25)]);
+  assert.equal(meme.charge, 21.25);
+});

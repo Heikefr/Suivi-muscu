@@ -62,6 +62,12 @@ function rendre() {
   const f = document.querySelector('.feuille');
   if (f && ui.modalGardeScroll) f.scrollTop = scrollFeuille;
   ui.modalGardeScroll = false;
+  // Fenêtre de saisie qui vient de s'ouvrir : le clavier s'ouvre tout de suite, valeur sélectionnée.
+  if (ui.modal?.focus) {
+    const champ = document.getElementById('saisie-valeur');
+    if (champ) { champ.focus(); champ.select(); }
+    ui.modal.focus = false;
+  }
   // Retour à une liste : on retrouve l'endroit où l'on était (onglet Exercices).
   if (ui.restaurerScroll != null) { window.scrollTo(0, ui.restaurerScroll); ui.restaurerScroll = null; }
   if (ui.ecran === 'recup') tic();
@@ -109,6 +115,14 @@ $app.addEventListener('click', (ev) => {
   const res = f(el, ev);
   if (res instanceof Promise) return;
   if (res !== false) rendre();
+});
+
+// Touche « OK » du clavier dans une fenêtre de saisie : comme le bouton OK.
+$app.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter' && ev.target.id === 'saisie-valeur') {
+    ev.preventDefault();
+    document.querySelector('[data-action="saisie-ok"]')?.click();
+  }
 });
 
 $app.addEventListener('input', (ev) => {

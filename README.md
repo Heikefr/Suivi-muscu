@@ -8,6 +8,7 @@ Appli web pour suivre mes séances de musculation sur iPhone.
 - Progression par exercice, catalogue avec conseils d'exécution (avec recherche)
 - Planning de la semaine : semaine type (Réglages), semaine modifiable, séances faites / prévues / pas faites
 - Séances enregistrées (« Mes séances ») et circuits Hyrox libres composés étape par étape
+- Poids tapé au clavier (virgule acceptée : disques de 1,25 kg) ; choix du prochain exercice pendant la récup (machine prise)
 - Fonctionne hors ligne une fois installée
 
 ## Installation sur iPhone

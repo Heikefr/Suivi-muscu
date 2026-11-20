@@ -131,7 +131,7 @@ export function fenetreEtape(m) {
     </div>
     ${avecCharge ? `<div class="carte pile u-ecart-8">
       <div class="ligne"><span class="pile u-ecart-2 u-flex-1"><span class="u-gras-600">Charge</span><span class="petit">${esc(chargeSous)}</span></span>
-        <div class="stepper"><button data-action="etape-charge" data-d="-1" aria-label="Moins lourd">−</button><div class="val">${chargeVal}</div><button data-action="etape-charge" data-d="1" aria-label="Plus lourd">+</button></div></div>
+        <div class="stepper"><button data-action="etape-charge" data-d="-1" aria-label="Moins lourd">−</button><button class="val val-saisie" data-action="saisie" data-quoi="etape" aria-label="Taper la charge">${chargeVal}</button><button data-action="etape-charge" data-d="1" aria-label="Plus lourd">+</button></div></div>
       ${st.chargeCle && et.charge != null ? '<button class="btn-lien u-hmin-0 u-pad-0" data-action="etape-compet">Revenir à la charge de compétition</button>' : ''}
     </div>` : ''}
     ${et.type === 'repos' || et.unite === 's' ? '<div class="petit">Compte à rebours : passe tout seul à l\'étape suivante.</div>' : '<div class="petit">Chrono : tu valides l\'étape quand elle est finie.</div>'}
@@ -195,7 +195,7 @@ export const actions = {
       const cle = station(e.type).chargeCle;
       const base = cle ? CHARGES[niveauCharges(d.hyroxProfil) || 1][cle] : null;
       e.charge = base != null ? Math.max(0, base + sens * pas) : (sens > 0 ? pas : 0);
-    } else e.charge = Math.max(0, Math.round((e.charge + sens * pas) * 10) / 10);
+    } else e.charge = Math.max(0, Math.round((e.charge + sens * pas) * 100) / 100);
     if (e.charge === 0 && !station(e.type).chargeCle) e.charge = null;
     ui.modalGardeScroll = true;
   },

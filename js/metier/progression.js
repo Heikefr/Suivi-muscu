@@ -22,7 +22,7 @@ export function chargeDe(series) {
 
 /** Arrondit à 1 décimale. */
 function arrondir(x) {
-  return Math.round(x * 10) / 10;
+  return Math.round(x * 100) / 100; // au centième : disques de 1,25 kg
 }
 
 // Renvoie { charge, raison } pour la prochaine séance.

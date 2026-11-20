@@ -689,3 +689,35 @@ button.conseillee { width: 100%; font-family: inherit; }
 .stepper .val.val-large { min-width: 96px; }
 /* Dans une fenêtre qui défile, rien ne doit se tasser (champ de recherche, boutons). */
 .feuille > * { flex-shrink: 0; }
+
+/* ---------- 0.9 : poids à taper, choix du suivant ---------- */
+/* Valeur touchable : soulignée en pointillé, avec un petit crayon */
+.valeur-saisie {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: transparent; border: none; padding: 0 0 1px; color: inherit; font: inherit;
+  border-bottom: 2px dashed var(--gris); min-height: 44px; cursor: pointer;
+}
+.valeur-saisie .crayon { color: var(--doux); flex-shrink: 0; }
+.reglage .valeur.valeur-saisie { font-family: var(--titre); }
+.val.val-saisie {
+  background: transparent; border: none; border-bottom: 2px dashed var(--gris); color: inherit; font: inherit;
+  font-weight: 700; padding: 0 2px; min-height: 44px; cursor: pointer;
+}
+.saisie-nombre {
+  display: flex; align-items: center; justify-content: center; gap: 8px; height: 80px;
+  border-radius: 16px; border: 2px solid var(--accent); background: var(--fond); padding: 0 16px;
+}
+.saisie-nombre input {
+  width: 100%; min-width: 0; text-align: center; background: transparent; border: none; outline: none;
+  color: var(--texte); font-family: var(--titre); font-size: 44px; font-weight: 700;
+}
+.saisie-nombre span { font-size: 20px; font-weight: 600; color: var(--doux); }
+/* Choix du suivant (fin d'exercice) */
+.tuile-suivant .dessin-tuile { width: 60px; height: 60px; }
+.tuile-suivant.choisi { border: 2px solid var(--accent); padding: 11px; }
+.tuile-suivant.choisi .badge { align-self: flex-start; padding: 3px 8px; border-radius: 7px; background: var(--accent); color: #0E1013; }
+.btn-machine {
+  height: 46px; border-radius: 14px; background: transparent; border: 1px dashed var(--gris);
+  color: var(--texte); font-size: 14px; font-weight: 600;
+}
+.lien-chiffre.valeur-saisie { align-self: flex-start; }

@@ -11,7 +11,17 @@ export function esc(t) {
 
 /** Nombre à la française, 1 décimale au plus : 42.5 → « 42,5 ». */
 export function nb(x) {
-  return String(Math.round(x * 10) / 10).replace('.', ',');
+  return String(Math.round(x * 100) / 100).replace('.', ',');
+}
+
+/**
+ * Lit un nombre tapé au clavier, virgule ou point : « 21,25 » → 21.25.
+ * Renvoie null si ce n'est pas un nombre positif (ou zéro).
+ */
+export function lireNombre(texte) {
+  const t = String(texte ?? '').trim().replace(/\s/g, '').replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(t)) return null;
+  return Math.round(Number(t) * 100) / 100;
 }
 
 /** Date du jour au format AAAA-MM-JJ (heure du téléphone). */

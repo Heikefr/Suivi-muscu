@@ -11,7 +11,7 @@ import { illustration } from '../illustrations.js';
 import { EXERCICES, exo, seance } from '../metier/donnees.js';
 import { ECHAUFFEMENTS, RECUP_MAX, RECUP_MIN, RECUP_PAS, dureeRecup, erreurAEviter } from '../metier/conseils.js';
 import { chargeDe } from '../metier/progression.js';
-import { aujourdhui, dateLongue, esc, ilYa, mmss, nb } from '../outils.js';
+import { aujourdhui, dateLongue, esc, ilYa, lireNombre, mmss, nb } from '../outils.js';
 import {
   ajouterExo, allerExo, chargeSerie, exoCourant, finRecup, garderEcranAllume, libererEcran, preparerExo, prochainIndex,
   recalculerPlan, terminer, validerSerie,
@@ -124,7 +124,7 @@ export function ecranExercice() {
     ? `<div class="reglage"><div class="centre"><div class="valeur petit-texte">Poids du corps</div><div class="petit">${esc(e.raison)}</div></div></div>`
     : `<div class="reglage">
         <button data-action="charge" data-d="-1" aria-label="Moins lourd">−</button>
-        <div class="centre"><div class="valeur ${e.charge == null ? 'petit-texte' : ''}" aria-live="polite">${chargeTexte(e.charge, def)}</div><div class="petit">${esc(sousPoids)}</div></div>
+        <div class="centre"><button class="valeur valeur-saisie ${e.charge == null ? 'petit-texte' : ''}" data-action="saisie" data-quoi="charge" aria-label="Taper la charge : ${chargeTexte(e.charge, def)}" aria-live="polite">${chargeTexte(e.charge, def)}${ICONES.crayon}</button><div class="petit">${esc(sousPoids)}</div></div>
         <button data-action="charge" data-d="1" aria-label="Plus lourd">+</button>
       </div>`;
 
@@ -163,6 +163,7 @@ export function ecranExercice() {
     <div class="cases-series" style="grid-template-columns:repeat(${Math.min(total, 6)},minmax(0,1fr))">${cases}</div>
     <div class="pousse"></div>
     <div class="pile u-ecart-6">
+      ${fait === 0 ? lienMachinePrise() : ''}
       <button class="btn-principal" data-action="valider">Valider la série ${fait + 1}</button>
       <div class="ligne liens-series">
         <button class="btn-lien" data-action="retrait-serie" aria-label="Retirer une série" ${total > Math.max(1, fait + 1) ? '' : 'disabled'}>− Série</button>
@@ -197,7 +198,7 @@ function ecranHaltero(e, def) {
       <div class="ligne u-items-flex-end">
         <div class="pile u-flex-1 u-ecart-4">
           <div class="petit">Série ${fait + 1} sur ${total} · ${repsTexte(reps, def)}</div>
-          <button class="chiffre lien-chiffre" data-action="options" style="font-size:${charge == null ? 30 : 52}px">${charge == null ? 'À choisir' : nb(charge) + ' kg'}</button>
+          <button class="chiffre lien-chiffre valeur-saisie" data-action="saisie" data-quoi="charge" aria-label="Taper la charge" style="font-size:${charge == null ? 30 : 52}px">${charge == null ? 'À choisir' : nb(charge) + ' kg'}${ICONES.crayon}</button>
         </div>
         ${record ? `<div class="pile u-items-flex-end u-ecart-4"><div class="chiffre u-t-28 u-c-accent">${nb(pct)} %</div><div class="petit u-t-12">de ton record ${nb(record)} kg</div></div>` : ''}
       </div>
@@ -213,6 +214,7 @@ function ecranHaltero(e, def) {
     </div>
     <div class="pousse"></div>
     <div class="pile u-ecart-10">
+      ${fait === 0 ? lienMachinePrise() : ''}
       <div class="u-t-14 u-gras-600 u-aligne-center">Combien de reps réussies sur ${reps}&nbsp;?</div>
       <div class="choix-reps" style="grid-template-columns:repeat(${reps + 1},minmax(0,1fr))">${boutons}</div>
       <div class="ligne u-justifie-space-between">
@@ -281,6 +283,13 @@ export function ecranRecup() {
       <button class="btn-lien" data-action="ajout-seance">Choisir dans tous les exercices</button>
     </div>
     <button class="btn-principal" data-action="terminer-seance">Terminer la séance</button>`;
+  } else if (exoTermine) {
+    // Fin d'un exercice : on choisit le suivant pendant la récup (machine prise…).
+    suite = `<div class="pile u-ecart-8">
+      <h2 class="u-t-20">Choisis le suivant</h2>
+      <div class="petit">Machine prise ? Touche un autre exercice. Sans choix, « Suivant » démarre à la fin de la récup.</div>
+      ${tuilesSuivant(d.enCours.index)}
+    </div>`;
   } else {
     suite = `<div class="carte ligne u-ecart-12 suite">
       <span class="mini-dessin">${illustration(def.dessin, def.nom, 40)}</span>
@@ -288,8 +297,7 @@ export function ecranRecup() {
         <span class="petit">${exoTermine ? 'Exercice suivant' : 'Ensuite'}</span>
         <span class="u-gras-600">${e === exoFait ? '' : `${esc(def.nom)} · `}${esc(texteSerieSuivante(e, def))}</span>
       </span>
-    </div>
-    ${exoTermine ? '<button class="btn-secondaire" data-action="ma-seance">Choisir un autre exercice</button>' : ''}`;
+    </div>`;
   }
 
   return `<main class="ecran ${theme}" style="gap:18px">
@@ -316,15 +324,54 @@ export function ecranRecup() {
       <button class="btn-secondaire" data-action="ajuster" data-d="15">+ 15 s</button>
       ${r.finSeance ? '<span></span>' : '<button class="btn-secondaire" data-action="fin-recup">Passer la récup</button>'}
     </div>
+    ${exoTermine && !r.finSeance ? suite : ''}
     <div class="carte pile u-ecart-12 u-pad-16">
       <div class="u-t-15 u-gras-600">Comment était cette série&nbsp;?</div>
       <div class="grille3 choix-ressenti u-ecart-8">${btnR('facile', 'Facile')}${btnR('correct', 'Correct')}${btnR('dur', 'Dur')}</div>
       <div class="petit">Facultatif. Sert à ajuster le poids conseillé de la prochaine séance.</div>
       <button class="btn-lien lien-gene ${geneDuJour ? 'notee' : ''}" data-action="gene" data-id="${defFait.id}">${geneDuJour ? `Gêne notée ${esc(LIBELLES_ZONE[alerte.zone] || '')} · modifier` : 'Signaler une douleur ou une gêne'}</button>
     </div>
-    ${suite}
+    ${exoTermine && !r.finSeance ? '' : suite}
     ${conseils}
   </main>`;
+}
+
+/**
+ * Tuiles des exercices qui restent à faire, plus « Autre exercice » (tout le catalogue).
+ * @param choisi  index de l'exercice marqué « Suivant » (-1 : aucun)
+ */
+function tuilesSuivant(choisi, exclure = -1) {
+  const ec = d.enCours;
+  const tuiles = ec.exercices.map((x, i) => {
+    const n = x.series.length;
+    if (n >= x.cible.series || i === exclure) return '';
+    const def = exo(x.exo);
+    const reste = x.cible.series - n;
+    const detail = `${reste} série${reste > 1 ? 's' : ''}${n ? ` restante${reste > 1 ? 's' : ''}` : ''} · ${x.cible.repsMin === x.cible.repsMax ? x.cible.repsMin : `${x.cible.repsMin} à ${x.cible.repsMax}`} ${def.unite === 's' ? 's' : 'reps'}`;
+    return `<button class="tuile tuile-suivant ${i === choisi ? 'choisi' : ''}" data-action="choisir-suivant" data-i="${i}" aria-pressed="${i === choisi}">
+      ${i === choisi ? '<span class="badge">Suivant</span>' : ''}
+      <span class="dessin-tuile">${illustration(def.dessin, def.nom, 52)}</span>
+      <span class="nom">${esc(def.nom)}</span>
+      <span class="petit">${esc(detail)}</span>
+    </button>`;
+  }).join('');
+  return `<div class="tuiles">
+    ${tuiles}
+    <button class="tuile ajout" data-action="ajout-seance"><span class="carre-plus">${ICONES.plus}</span><span class="nom">Autre exercice</span><span class="petit">dans tout le catalogue</span></button>
+  </div>`;
+}
+
+/** Lien « Machine prise ? », avant la première série d'un exercice. */
+function lienMachinePrise() {
+  return '<button class="btn-machine" data-action="changer-exo">Machine prise ? Changer d\'exercice</button>';
+}
+
+/** Fenêtre « Machine prise » : les autres exercices de la séance, ou un exercice du catalogue. */
+export function fenetreChangerExo() {
+  return `<h2>Faire un autre exercice</h2>
+    <div class="petit">${esc(nomExo(exoCourant().exo))} reviendra juste après.</div>
+    ${tuilesSuivant(-1, d.enCours.index)}
+    <button class="btn-principal" data-action="fermer">Annuler</button>`;
 }
 
 /** Écran « Ma séance » : une tuile par exercice prévu, pour voir toute la séance et choisir le suivant. */
@@ -463,6 +510,67 @@ export const actions = {
   // --- Ma séance (tuiles) ---
   'ma-seance'() { ui.ecran = 'ma-seance'; window.scrollTo(0, 0); },
   'retour-seance'() { ui.ecran = d.enCours.recup ? 'recup' : 'exercice'; window.scrollTo(0, 0); },
+  // Fin d'exercice (récup) ou « Machine prise » : l'exercice choisi devient le suivant.
+  'choisir-suivant'(el) {
+    allerExo(Number(el.dataset.i));
+    if (ui.modal?.type === 'changer-exo') { ui.modal = null; window.scrollTo(0, 0); }
+    ui.modalGardeScroll = true;
+  },
+  'changer-exo'() { ui.modal = { type: 'changer-exo' }; },
+  // Saisie d'un nombre au clavier (charge, record d'haltéro, charge d'une étape de circuit).
+  saisie(el) {
+    const quoi = el.dataset.quoi;
+    const retour = ui.modal;
+    let valeur = null;
+    let sous = '';
+    if (quoi === 'charge') {
+      const e = exoCourant();
+      const def = exo(e.exo);
+      const i = e.series.length;
+      valeur = e.plan ? chargeSerie(e, i) : (e.charge ?? e.conseillee);
+      sous = `${def.nom} · série ${i + 1}${def.materiel === 'halteres' ? ' · par haltère' : ''}`;
+    } else if (quoi === 'record') {
+      valeur = d.records[el.dataset.id] ?? null;
+      sous = exo(el.dataset.id).nom;
+    } else if (quoi === 'etape') {
+      // Le nom d'une étape libre, déjà tapé, ne doit pas se perdre.
+      const nom = document.getElementById('etape-nom');
+      if (nom) retour.e.nom = nom.value.trim();
+      valeur = retour.e.charge;
+      sous = 'Étape du circuit';
+    }
+    ui.modal = { type: 'saisie', quoi, id: el.dataset.id || null, sous, valeur, retour, focus: true };
+  },
+  'saisie-annuler'() { ui.modal = ui.modal.retour || null; ui.modalGardeScroll = true; },
+  'saisie-ok'() {
+    const m = ui.modal;
+    const texte = document.getElementById('saisie-valeur')?.value || '';
+    const v = lireNombre(texte);
+    const vide = !texte.trim();
+    if ((v == null && !(vide && m.quoi !== 'charge')) || v > 500) {
+      toast('Tape un poids, par exemple 21,25');
+      return false;
+    }
+    if (m.quoi === 'charge') {
+      const e = exoCourant();
+      const def = exo(e.exo);
+      if (e.plan) {
+        e.plan[e.series.length] = v;
+        // Record inconnu : la charge choisie vaut aussi pour les séries suivantes.
+        if (!d.records[def.id]) e.charge = v;
+      } else e.charge = v;
+    } else if (m.quoi === 'record') {
+      if (v) d.records[m.id] = v;
+      else delete d.records[m.id];
+      if (d.enCours && exoCourant()?.exo === m.id) recalculerPlan(exoCourant(), exo(m.id));
+    } else if (m.quoi === 'etape') {
+      // Vide : retour à la charge de compétition (stations Hyrox) ou sans charge.
+      m.retour.e.charge = vide ? null : v;
+    }
+    if (m.quoi !== 'etape') enregistrer();
+    ui.modal = m.retour || null;
+    ui.modalGardeScroll = true;
+  },
   'aller-exo'(el) {
     allerExo(Number(el.dataset.i));
     ui.ecran = d.enCours.recup ? 'recup' : 'exercice';
@@ -550,7 +658,7 @@ export const actions = {
     } else {
       const pas = def.increment || 1;
       const base = e.charge ?? e.conseillee ?? 0;
-      e.charge = e.charge == null && sens > 0 && base === 0 ? pas : Math.max(0, Math.round((base + sens * pas) * 10) / 10);
+      e.charge = e.charge == null && sens > 0 && base === 0 ? pas : Math.max(0, Math.round((base + sens * pas) * 100) / 100);
     }
     enregistrer();
     ui.modalGardeScroll = true;
